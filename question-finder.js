@@ -1,149 +1,177 @@
-// options.js
+// Question Finder - Enhanced with batch processing and table view
 document.addEventListener('DOMContentLoaded', () => {
+    // DOM Elements
     const displayUid = document.getElementById('displayUid');
     const displayToken = document.getElementById('displayToken');
     const displaySavedDate = document.getElementById('displaySavedDate');
-    const questionIdInput = document.getElementById('question-id');
+    const questionIdsInput = document.getElementById('question-ids');
     const startFindQuestion = document.getElementById('startFindQuestion');
     const buttonText = document.getElementById('buttonText');
     const loadingSpinner = document.getElementById('loadingSpinner');
     const statusResultDiv = document.getElementById('statusResult');
     const messageP = document.getElementById('message');
     const detailedResultsDiv = document.getElementById('detailedResults');
-    const resultsList = document.getElementById('resultsList');
+    const resultsTableBody = document.getElementById('resultsTableBody');
+    const resultsSummary = document.getElementById('resultsSummary');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
 
     let currentUid = '';
     let currentToken = '';
-    let currentSavedDate = '';
 
-    // Tải UID và Token đã lưu từ storage khi trang được tải
-    chrome.storage.local.get(['uid', 'token','savedDate', 'questionIdsInput', 'bankIid'], (data) => {
-        if (data.uid) {
-            currentUid = data.uid;
-            displayUid.textContent = data.uid;
-        } else {
-            displayUid.textContent = 'Chưa có';
-            displayUid.classList.add('text-red-500');
-        }
-        if (data.token) {
-            currentToken = data.token;
-            displayToken.textContent = data.token;
-        } else {
-            displayToken.textContent = 'Chưa có';
-            displayToken.classList.add('text-red-500');
-        }
-        if (data.savedDate) {
-            currentSavedDate = data.savedDate;
-            displaySavedDate.textContent = new Date(data.savedDate).toLocaleString();;
-        } else {
-            displaySavedDate.textContent = 'Chưa có';
-            displaySavedDate.classList.add('text-red-500');
-        }
-        if (data.questionIdInput) questionIdInput.value = data.questionIdInput;
-    });
+    // Load and display auth data using shared module
+    SharedAuth.loadAuthData((authData) => {
+        currentUid = authData.uid;
+        currentToken = authData.token;
 
-    startFindQuestion.addEventListener('click', async () => {
-        // Reset trạng thái hiển thị
-        messageP.innerHTML = '';
-        statusResultDiv.classList.add('hidden');
-        resultsList.innerHTML = '';
-        detailedResultsDiv.classList.add('hidden');
-        statusResultDiv.className = 'mt-4 p-4 rounded-md hidden'; // Reset classes
-
-        const questionId = questionIdInput.value.trim();
-
-        if (!currentUid || !currentToken) {
-            showMessage("Vui lòng nhập UID và Token từ trang Popup trước khi thực hiện.", 'error');
-            return;
-        }
-
-        if (questionId.length === 0) {
-            showMessage("Vui lòng điền ID câu hỏi.", 'error');
-            return;
-        }
-
-        // Lưu dữ liệu người dùng nhập vào storage
-        chrome.storage.local.set({
-            questionIdInput: questionIdInput.value
+        SharedAuth.displayAuthData(authData, {
+            displayUid,
+            displayToken,
+            displaySavedDate
         });
 
-        // Bật trạng thái xử lý
-        setProcessing(true);
-        showMessage("Đang xử lý tìm kiếm câu hỏi...", 'info');
-
-        try {
-            // Gửi thông điệp tới background script
-            chrome.runtime.sendMessage({
-                action: "findQuestion",
-                uid: currentUid,
-                token: currentToken,
-                questionId: questionId,
-            }, (response) => {
-                if (chrome.runtime.lastError) {
-                    console.error("Lỗi khi gửi thông điệp:", chrome.runtime.lastError.message);
-                    showMessage(`Lỗi: ${chrome.runtime.lastError.message}. Vui lòng kiểm tra console để biết thêm chi tiết.`, 'error');
-                    setProcessing(false);
-                    return;
-                }
-
-                if (response && response.status === "completed") {
-                    showMessage('Hoàn tất quá trình tìm kiếm!', 'success');
-                    displayResults(response.results);
-                } else {
-                    showMessage('Có lỗi xảy ra trong quá trình xử lý.', 'error');
-                }
-                setProcessing(false);
-            });
-        } catch (error) {
-            console.error("Lỗi không xác định:", error);
-            showMessage(`Lỗi không xác định: ${error.message}`, 'error');
-            setProcessing(false);
-        }
+        // Load saved input
+        chrome.storage.local.get(['questionIdsInput'], (data) => {
+            if (data.questionIdsInput) questionIdsInput.value = data.questionIdsInput;
+        });
     });
 
-    function setProcessing(isProcessing) {
-        startFindQuestion.disabled = isProcessing;
-        if (isProcessing) {
-            buttonText.textContent = "Đang xử lý...";
-            loadingSpinner.classList.remove('hidden');
-        } else {
-            buttonText.textContent = "Tìm câu hỏi";
-            loadingSpinner.classList.add('hidden');
-        }
+    // Update progress
+    function updateProgress(current, total) {
+        const percentage = (current / total) * 100;
+        progressBar.style.width = `${percentage}%`;
+        progressText.textContent = `Đang xử lý: ${current}/${total}`;
     }
 
-    function showMessage(msg, type) {
-        messageP.textContent = msg;
-        statusResultDiv.classList.remove('hidden');
-        statusResultDiv.classList.remove('bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'bg-blue-100', 'text-blue-800');
-        if (type === 'success') {
-            statusResultDiv.classList.add('bg-green-100', 'text-green-800');
-        } else if (type === 'error') {
-            statusResultDiv.classList.add('bg-red-100', 'text-red-800');
-        } else if (type === 'info') {
-            statusResultDiv.classList.add('bg-blue-100', 'text-blue-800');
+    // Add row to results table
+    function addResultRow(index, questionId, result) {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50 transition-colors';
+
+        const isSuccess = result && result.success;
+        const statusClass = isSuccess ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold';
+        const statusText = isSuccess ? '✓ Tìm thấy' : '✗ Không tìm thấy';
+
+        let bankName = 'N/A';
+        let bankUrl = '#';
+
+        if (isSuccess) {
+            bankName = result.success.bank_name || 'N/A';
+            bankUrl = result.success.url || '#';
         }
+
+        row.innerHTML = `
+            <td class="px-4 py-3 text-sm text-gray-600">${index}</td>
+            <td class="px-4 py-3 text-sm font-mono font-semibold text-blue-600">${questionId}</td>
+            <td class="px-4 py-3 text-sm ${statusClass}">${statusText}</td>
+            <td class="px-4 py-3 text-sm text-gray-800">${bankName}</td>
+            <td class="px-4 py-3 text-sm">
+                ${isSuccess
+                ? `<a href="${bankUrl}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline break-all">${bankUrl}</a>`
+                : '<span class="text-gray-400">-</span>'
+            }
+            </td>
+        `;
+
+        resultsTableBody.appendChild(row);
     }
 
-    function displayResults(results) {
-        resultsList.innerHTML = '';
-        if (results.length > 0) {
-            detailedResultsDiv.classList.remove('hidden');
+    // Handle find question button click
+    startFindQuestion.addEventListener('click', async () => {
+        // Reset UI
+        SharedUI.resetUI({
+            messageP,
+            statusResultDiv,
+            detailedResultsDiv
+        });
+        resultsTableBody.innerHTML = '';
+        progressContainer.classList.add('hidden');
 
-            results.forEach(result => {
-                const li = document.createElement('li');
-                li.className = result.success ? 'text-green-700' : 'text-red-700';
+        const questionIds = SharedUI.parseMultilineInput(questionIdsInput.value);
 
+        // Validate auth
+        if (!SharedAuth.validateAuth(currentUid, currentToken)) {
+            SharedUI.showMessage(statusResultDiv, messageP,
+                "Vui lòng nhập UID và Token từ trang Popup trước khi thực hiện.", 'error');
+            return;
+        }
+
+        // Validate input
+        if (questionIds.length === 0) {
+            SharedUI.showMessage(statusResultDiv, messageP,
+                "Vui lòng điền ít nhất một ID câu hỏi.", 'error');
+            return;
+        }
+
+        // Save input
+        chrome.storage.local.set({ questionIdsInput: questionIdsInput.value });
+
+        // Start processing
+        SharedUI.setProcessing(startFindQuestion, buttonText, loadingSpinner, true, 'Tìm câu hỏi');
+        SharedUI.showMessage(statusResultDiv, messageP,
+            `Đang tìm kiếm ${questionIds.length} câu hỏi...`, 'info');
+
+        // Show progress
+        progressContainer.classList.remove('hidden');
+        updateProgress(0, questionIds.length);
+
+        // Show results table
+        detailedResultsDiv.classList.remove('hidden');
+
+        // Process questions one by one
+        let successCount = 0;
+        let failCount = 0;
+
+        for (let i = 0; i < questionIds.length; i++) {
+            const questionId = questionIds[i];
+            updateProgress(i + 1, questionIds.length);
+
+            try {
+                // Send message to background for each question
+                const result = await new Promise((resolve) => {
+                    chrome.runtime.sendMessage({
+                        action: "findQuestion",
+                        uid: currentUid,
+                        token: currentToken,
+                        questionId: questionId,
+                    }, (response) => {
+                        if (chrome.runtime.lastError) {
+                            console.error("Error:", chrome.runtime.lastError.message);
+                            resolve({ success: false, questionId });
+                        } else if (response && response.status === "completed" && response.results.length > 0) {
+                            resolve(response.results[0]);
+                        } else {
+                            resolve({ success: false, questionId });
+                        }
+                    });
+                });
+
+                // Add result to table
                 if (result.success) {
-                    const { bank_name, url } = result.success;
-                    li.innerHTML = `NHCH: ${bank_name}<br>Link: <i><a href="${url}" target="_blank">${url}</a></i>`;
+                    successCount++;
                 } else {
-                    // Directly set the innerHTML for this 'li'
-                    li.textContent = `Thất bại${result.message ? ': ' + result.message : ''}`;
+                    failCount++;
                 }
 
-                resultsList.appendChild(li);
-            });
+                addResultRow(i + 1, questionId, result);
+
+            } catch (error) {
+                console.error(`Error processing question ${questionId}:`, error);
+                failCount++;
+                addResultRow(i + 1, questionId, { success: false });
+            }
         }
-    }
+
+        // Update summary
+        resultsSummary.textContent = `Tổng: ${questionIds.length} | Tìm thấy: ${successCount} | Không tìm thấy: ${failCount}`;
+
+        // Hide progress, show completion message
+        progressContainer.classList.add('hidden');
+        SharedUI.showMessage(statusResultDiv, messageP,
+            `Hoàn tất! Tìm thấy ${successCount}/${questionIds.length} câu hỏi.`,
+            successCount > 0 ? 'success' : 'error');
+
+        SharedUI.setProcessing(startFindQuestion, buttonText, loadingSpinner, false, 'Tìm câu hỏi');
+    });
 });

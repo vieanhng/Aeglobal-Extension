@@ -89,11 +89,65 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Hàm tự động lấy auth khi mở popup
+    async function autoFetchAuthOnOpen() {
+        // Kiểm tra xem có đang ở trang LotusLMS không
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        const activeTab = tabs[0];
+
+        if (activeTab && (activeTab.url.startsWith("https://aeglobal.lotuslms.com/") ||
+            activeTab.url.startsWith("https://aeglobal2.lotuslms.com/"))) {
+
+            // Hiển thị thông báo đang tự động lấy
+            statusMessage.textContent = "🔄 Đang tự động lấy thông tin xác thực...";
+            statusMessage.className = "mt-3 text-sm text-center text-blue-600";
+
+            const authData = await getAuthDataFromTargetSite();
+
+            if (authData && authData.token && authData.iid) {
+                const currentTimestamp = Date.now();
+
+                // Kiểm tra xem có cần cập nhật không (so sánh với dữ liệu hiện tại)
+                const existingData = await chrome.storage.local.get(['uid', 'token']);
+                const needsUpdate = !existingData.uid || !existingData.token ||
+                    existingData.uid !== authData.iid ||
+                    existingData.token !== authData.token;
+
+                if (needsUpdate) {
+                    // Lưu thông tin mới
+                    chrome.runtime.sendMessage({
+                        action: "setAuthData",
+                        uid: authData.iid,
+                        token: authData.token,
+                        savedDate: currentTimestamp
+                    }, (response) => {
+                        if (response && response.status === "success") {
+                            statusMessage.textContent = "✅ Đã tự động cập nhật thông tin xác thực!";
+                            statusMessage.className = "mt-3 text-sm text-center text-green-600";
+                            showSavedAuthInfo(authData.iid, authData.token, currentTimestamp);
+
+                            // Ẩn thông báo sau 3 giây
+                            setTimeout(() => {
+                                statusMessage.textContent = "";
+                            }, 3000);
+                        }
+                    });
+                } else {
+                    // Thông tin đã cập nhật, chỉ cần ẩn thông báo
+                    statusMessage.textContent = "";
+                }
+            } else {
+                // Không lấy được auth, ẩn thông báo
+                statusMessage.textContent = "";
+            }
+        }
+    }
+
     // Khởi tạo trạng thái khi popup mở
     loadAndDisplayAuthState();
 
     // Event Listeners cho phần thông tin xác thực
-    chrome.storage.local.get(['uid', 'token', 'savedDate'], (data) => {
+    chrome.storage.local.get(['uid', 'token', 'savedDate'], async (data) => {
         const { uid, token, savedDate } = data;
         const now = new Date();
         const oneDay = 24 * 60 * 60 * 1000; // Một ngày tính bằng milliseconds
@@ -107,6 +161,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     showLoginPrompt();
                     statusMessage.textContent = "Thông tin xác thực đã hết hạn (quá 1 ngày) và đã được xóa. Vui lòng cập nhật lại.";
                     statusMessage.className = "mt-3 text-sm text-center text-orange-600";
+
+                    // Thử tự động lấy lại auth
+                    autoFetchAuthOnOpen();
                 });
                 return; // Dừng lại không hiển thị dữ liệu cũ
             }
@@ -114,8 +171,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (uid && token) {
             showSavedAuthInfo(uid, token, savedDate);
+            // Tự động cập nhật auth nếu đang ở trang LotusLMS
+            autoFetchAuthOnOpen();
         } else {
             showLoginPrompt();
+            // Thử tự động lấy auth nếu chưa có
+            autoFetchAuthOnOpen();
         }
     });
 
@@ -143,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Nút "Cập nhật" (tương tự như "Lấy thông tin từ trang web" nhưng khi đã có sẵn)
+    // Nút "Cập nhật" (cho phép cập nhật thủ công nếu cần)
     updateAuthInfoBtn.addEventListener('click', async () => {
         statusMessage.textContent = "Đang cố gắng cập nhật thông tin từ trang web...";
         statusMessage.className = "mt-3 text-sm text-center text-blue-600";

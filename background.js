@@ -115,12 +115,12 @@ const findQuestion = async (questionId, uid, token) => {
 
 /**
  * Cập nhật Tags với 2 tùy chọn: append (thêm vào) hoặc replace (thay thế tất cả)
- * @param {string} questionId - ID câu hỏi
+ * @param {Object} questionObject - Object chứa thông tin câu hỏi
  * @param {Array|string} tags - Danh sách tag mới hoặc tag cần thêm
  * @param {string} mode - 'append' hoặc 'replace' (mặc định là 'append')
  */
-const updateQuestionTags = async (questionId, tags, mode = 'append', uid, token) => {
-    console.log(`Đang ${mode === 'append' ? 'thêm' : 'thay thế'} tags cho ID: ${questionId}`);
+const updateQuestionTags = async (questionObject, tags, mode = 'append', uid, token) => {
+    console.log(`Đang ${mode === 'append' ? 'thêm' : 'thay thế'} tags cho ID: ${questionObject.id}`);
 
     try {
         let finalTags = Array.isArray(tags) ? tags : [tags];
@@ -128,8 +128,7 @@ const updateQuestionTags = async (questionId, tags, mode = 'append', uid, token)
         // --- XỬ LÝ LOGIC APPEND ---
         if (mode === 'append') {
             // Bước 1: Tìm thông tin hiện tại để lấy các tags cũ
-            const info = await findQuestion(questionId, uid, token);
-            const currentTags = info.tags || [];
+            const currentTags = questionObject.tags || [];
 
             // Bước 2: Hợp nhất (tránh trùng lặp)
             finalTags = [...new Set([...currentTags, ...finalTags])];
@@ -137,8 +136,8 @@ const updateQuestionTags = async (questionId, tags, mode = 'append', uid, token)
 
         // --- GỬI REQUEST CẬP NHẬT ---
         const formData = new FormData();
-        formData.append('iid', String(questionId));
-        formData.append('id', String(questionId));
+        formData.append('iid', String(questionObject.id));
+        formData.append('id', String(questionObject.id));
         formData.append('ntype', 'question');
         formData.append('rootNode[ntype]', 'question-bank');
         formData.append('_sand_step', 'tags');
@@ -172,6 +171,32 @@ const updateQuestionTags = async (questionId, tags, mode = 'append', uid, token)
     }
 };
 
+// Port connections for real-time logging
+let connectedPorts = [];
+
+chrome.runtime.onConnect.addListener((port) => {
+    if (port.name === "logChannel") {
+        connectedPorts.push(port);
+        console.log("UI page connected for logging");
+
+        port.onDisconnect.addListener(() => {
+            connectedPorts = connectedPorts.filter(p => p !== port);
+            console.log("UI page disconnected from logging");
+        });
+    }
+});
+
+// Helper function to send logs to UI
+function sendLogToUI(message, type = 'info') {
+    connectedPorts.forEach(port => {
+        try {
+            port.postMessage({ type: 'log', message, logType: type });
+        } catch (error) {
+            console.error('Failed to send log to UI:', error);
+        }
+    });
+}
+
 // Lắng nghe các thông điệp từ popup.js hoặc options.js
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // Xử lý khi popup gửi UID và Token
@@ -186,28 +211,128 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     // Xử lý yêu cầu nhân bản và di chuyển câu hỏi từ options page
     if (request.action === "duplicateAndMoveQuestions") {
-        const { uid, token, questionIds, bankLinks } = request;
+        const { uid, token, questionIds, bankLinks, tags } = request;
 
         const processBatch = async () => {
             const results = [];
+
             for (const bankLink of bankLinks) {
-                const bankId = bankLink.trim(); // Giả sử ID ngân hàng là phần cuối cùng của link
-                const duplicatedQuestionIds = [];
-                for (const originalQId of questionIds) {
+                const bankId = bankLink.trim();
+                const duplicatedQuestionMap = []; // Store mapping: { originalId, duplicatedId }
+
+                // Step 1: Duplicate all questions and track original IDs
+                console.log(`\n========================================`);
+                sendLogToUI(`========================================`, 'header');
+                console.log(`Processing bank ${bankId}: Duplicating ${questionIds.length} questions...`);
+                sendLogToUI(`Processing bank ${bankId}: Duplicating ${questionIds.length} questions...`, 'header');
+                console.log(`========================================`);
+                sendLogToUI(`========================================`, 'header');
+
+                for (let i = 0; i < questionIds.length; i++) {
+                    const originalQId = questionIds[i];
+                    console.log(`\n[${i + 1}/${questionIds.length}] Duplicating question ID: ${originalQId}`);
+                    sendLogToUI(`[${i + 1}/${questionIds.length}] Duplicating question ID: ${originalQId}`, 'info');
                     const newQObject = await duplicateQuestion(originalQId, uid, token);
                     if (newQObject) {
-                        duplicatedQuestionIds.push(newQObject.id);
+                        console.log(`✓ [${i + 1}/${questionIds.length}] Successfully duplicated: ${originalQId} → ${newQObject.id}`);
+                        sendLogToUI(`✓ [${i + 1}/${questionIds.length}] Successfully duplicated: ${originalQId} → ${newQObject.id}`, 'success');
+                        duplicatedQuestionMap.push({
+                            originalId: originalQId,
+                            duplicatedId: newQObject.id,
+                            duplicateObject: newQObject
+                        });
+                    } else {
+                        console.error(`✗ [${i + 1}/${questionIds.length}] Failed to duplicate question ID: ${originalQId}`);
+                        sendLogToUI(`✗ [${i + 1}/${questionIds.length}] Failed to duplicate question ID: ${originalQId}`, 'error');
                     }
                 }
-                if (duplicatedQuestionIds.length > 0) {
-                    await moveQuestionsToBank(duplicatedQuestionIds, bankId, uid, token);
-                    const updatedTags = await updateQuestionTags(duplicatedQuestionIds, request.tags, 'append', uid, token);
 
-                    results.push({ bankLink, success: updatedTags, duplicatedCount: duplicatedQuestionIds.length });
-                } else {
-                    results.push({ bankLink, success: false, duplicatedCount: 0, message: "Không có câu hỏi nào được nhân bản cho ngân hàng này." });
+                // Check if any questions were duplicated
+                if (duplicatedQuestionMap.length === 0) {
+                    console.error(`\n⚠ No questions were successfully duplicated for bank ${bankId}`);
+                    sendLogToUI(`⚠ No questions were successfully duplicated for bank ${bankId}`, 'warning');
+                    results.push({
+                        bankLink,
+                        bankId,
+                        success: false,
+                        duplicatedCount: 0,
+                        movedCount: 0,
+                        taggedCount: 0,
+                        message: "Không có câu hỏi nào được nhân bản cho ngân hàng này."
+                    });
+                    continue;
                 }
+
+                console.log(`\n✓ Duplication complete: ${duplicatedQuestionMap.length}/${questionIds.length} questions duplicated successfully`);
+                sendLogToUI(`✓ Duplication complete: ${duplicatedQuestionMap.length}/${questionIds.length} questions duplicated successfully`, 'success');
+
+                // Extract duplicated IDs for moving
+                const duplicatedQuestionIds = duplicatedQuestionMap.map(item => item.duplicatedId);
+
+                // Step 2: Move duplicated questions to bank
+                console.log(`\n--- Moving ${duplicatedQuestionIds.length} questions to bank ${bankId}... ---`);
+                sendLogToUI(`--- Moving ${duplicatedQuestionIds.length} questions to bank ${bankId}... ---`, 'info');
+                const moveSuccess = await moveQuestionsToBank(duplicatedQuestionIds, bankId, uid, token);
+
+                if (moveSuccess) {
+                    console.log(`✓ Successfully moved all questions to bank ${bankId}`);
+                    sendLogToUI(`✓ Successfully moved all questions to bank ${bankId}`, 'success');
+                } else {
+                    console.error(`✗ Failed to move questions to bank ${bankId}`);
+                    sendLogToUI(`✗ Failed to move questions to bank ${bankId}`, 'error');
+                }
+
+                // Step 3: Update tags for each duplicated question with auto-generated variant tag
+                let taggedCount = 0;
+                console.log(`\n--- Updating tags for ${duplicatedQuestionIds.length} questions... ---`);
+                sendLogToUI(`--- Updating tags for ${duplicatedQuestionIds.length} questions... ---`, 'info');
+
+                for (let i = 0; i < duplicatedQuestionMap.length; i++) {
+                    const item = duplicatedQuestionMap[i];
+                    console.log(`\n[${i + 1}/${duplicatedQuestionMap.length}] Updating tags for question ID: ${item.duplicatedId} (original: ${item.originalId})`);
+                    sendLogToUI(`[${i + 1}/${duplicatedQuestionMap.length}] Updating tags for question ID: ${item.duplicatedId} (original: ${item.originalId})`, 'info');
+
+                    // Create auto tag: 'variant of {original question id}'
+                    const variantTag = `variant of ${item.duplicateObject.id}`;
+
+                    // Combine auto tag with user-provided tags (if any)
+                    const allTags = tags && tags.length > 0
+                        ? [variantTag, ...tags]
+                        : [variantTag];
+
+                    console.log(`  Tags to apply: ${allTags.join(', ')}`);
+                    sendLogToUI(`  Tags to apply: ${allTags.join(', ')}`, 'info');
+
+                    const tagSuccess = await updateQuestionTags(item.duplicateObject, allTags, 'append', uid, token);
+                    if (tagSuccess) {
+                        console.log(`✓ [${i + 1}/${duplicatedQuestionMap.length}] Successfully tagged question ID: ${item.duplicatedId}`);
+                        sendLogToUI(`✓ [${i + 1}/${duplicatedQuestionMap.length}] Successfully tagged question ID: ${item.duplicatedId}`, 'success');
+                        taggedCount++;
+                    } else {
+                        console.error(`✗ [${i + 1}/${duplicatedQuestionMap.length}] Failed to tag question ID: ${item.duplicatedId}`);
+                        sendLogToUI(`✗ [${i + 1}/${duplicatedQuestionMap.length}] Failed to tag question ID: ${item.duplicatedId}`, 'error');
+                    }
+                }
+
+                console.log(`\n✓ Tagging complete: ${taggedCount}/${duplicatedQuestionMap.length} questions tagged successfully`);
+                sendLogToUI(`✓ Tagging complete: ${taggedCount}/${duplicatedQuestionMap.length} questions tagged successfully`, 'success');
+
+                // Determine overall success
+                const overallSuccess = moveSuccess && taggedCount > 0;
+
+                results.push({
+                    bankLink,
+                    bankId,
+                    success: overallSuccess,
+                    duplicatedCount: duplicatedQuestionMap.length,
+                    movedCount: moveSuccess ? duplicatedQuestionIds.length : 0,
+                    taggedCount: taggedCount,
+                    message: overallSuccess
+                        ? `Đã nhân bản ${duplicatedQuestionMap.length} câu hỏi, di chuyển ${moveSuccess ? 'thành công' : 'thất bại'}`
+                        : `Có lỗi xảy ra trong quá trình xử lý.`
+                });
             }
+
             sendResponse({ status: "completed", results: results });
         };
 

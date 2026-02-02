@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Aeglobal Tools",
-    "version": "1.0",
+    "version": "2.0",
     "description": "Automation tool for aeglobal lms",
     "permissions": [
         "activeTab",
