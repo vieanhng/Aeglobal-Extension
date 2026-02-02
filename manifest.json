@@ -1,0 +1,42 @@
+{
+    "manifest_version": 3,
+    "name": "Aeglobal Tools",
+    "version": "1.0",
+    "description": "Automation tool for aeglobal lms",
+    "permissions": [
+        "activeTab",
+        "storage",
+        "scripting"
+    ],
+    "host_permissions": [
+        "https://aeglobal.lotuslms.com/*",
+        "https://aeglobal2.lotuslms.com/*"
+    ],
+    "options_page": "options.html",
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://aeglobal.lotuslms.com/*",
+                "https://aeglobal2.lotuslms.com/*"
+            ],
+            "js": [
+                "content_script.js"
+            ],
+            "css": [
+                "lib/tailwind.min.css"
+            ]
+        }
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "icons": {
+        "16": "icons/icon16.png",
+        "32": "icons/icon32.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+    }
+}

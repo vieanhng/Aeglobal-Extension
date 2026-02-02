@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGlobal Tools</title>
+    <link href="lib/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            width: 320px;
+            padding: 20px;
+        }
+        .feature-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .feature-button:hover {
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="font-sans text-gray-800 bg-gray-50">
+    <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">AEGlobal Tools</h1>
+
+    <div id="authInfoSection" class="mb-6">
+        <div id="savedInfoDisplay" class="bg-blue-100 border border-blue-300 rounded-lg p-4 text-sm text-blue-800 hidden">
+            <p class="font-semibold mb-1">Thông tin xác thực:</p>
+            <p>UID: <span id="displayUid" class="font-bold"></span></p>
+            <p>Token: <span id="displayToken" class="font-bold break-all"></span></p>
+            <p class="mt-1 text-gray-600 text-xs">Cập nhật: <span id="savedDate" class="font-semibold"></span></p>
+            <div class="flex justify-end mt-3 space-x-2">
+                <button id="updateAuthInfoBtn"
+                        class="px-3 py-1 bg-yellow-500 text-white text-xs font-semibold rounded hover:bg-yellow-600 transition">Cập nhật</button>
+                <button id="clearAuthInfoBtn"
+                        class="px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded hover:bg-red-600 transition">Xóa</button>
+            </div>
+        </div>
+
+        <div id="loginPromptSection" class="bg-gray-200 border border-gray-300 rounded-lg p-4 text-sm text-gray-700 text-center hidden">
+            <p class="mb-3">Chưa có thông tin xác thực.</p>
+            <button id="getAuthInfoBtn"
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+                Lấy thông tin từ trang web
+            </button>
+        </div>
+        <p id="statusMessage" class="mt-3 text-sm text-center"></p>
+    </div>
+
+    <hr class="my-6 border-gray-200">
+
+    <div class="flex flex-col">
+        <button id="openQuestionDuplicator"
+                class="feature-button bg-green-500 text-white hover:bg-green-600 focus:ring-green-500">
+            Nhân bản câu hỏi
+        </button>
+        <button id="openQuestionMover"
+                class="feature-button bg-green-500 text-white hover:bg-green-600 focus:ring-green-500">
+            Di chuyển câu hỏi
+        </button>
+        <button id="openQuestionFinder"
+                class="feature-button bg-green-500 text-white hover:bg-green-600 focus:ring-green-500">
+            Tìm câu hỏi
+        </button>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

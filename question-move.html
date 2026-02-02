@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question Mover Options</title>
+    <link href="lib/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-6 font-sans text-gray-800">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Công cụ di chuyển câu hỏi</h1>
+
+        <div class="mb-6 bg-blue-50 border border-blue-200 rounded-md p-4 text-sm text-blue-800">
+            <p>UID đã lưu: <span id="displayUid" class="font-semibold">Đang tải...</span></p>
+            <p>Token đã lưu: <span id="displayToken" class="font-semibold break-all">Đang tải...</span></p>
+            <p class="mt-2 text-gray-600">Ngày lưu: <span id="displaySavedDate" class="font-semibold">Đang tải...</span></p>
+            <p class="mt-2 text-gray-600">Bạn có thể thay đổi UID/Token bằng cách mở lại Popup của tiện ích.</p>
+        </div>
+
+        <hr class="my-6 border-gray-200">
+
+        <div class="mb-6">
+            <label for="question-ids" class="block text-sm font-medium text-gray-700 mb-1">Danh sách ID câu hỏi</label>
+            <textarea id="question-ids" rows="8" placeholder="Nhập ID câu hỏi, mỗi ID trên một dòng"
+                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm resize-y"></textarea>
+            <p class="mt-2 text-sm text-gray-500">Ví dụ: 12345, 67890, ...</p>
+        </div>
+
+        <div class="mb-6">
+            <label for="bank-links" class="block text-sm font-medium text-gray-700 mb-1">Iid NHCH đích</label>
+            <input id="bankIid" placeholder="Nhập Iid ngân hàng"
+                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm resize-y"></textarea>
+        </div>
+
+        <div class="flex justify-center mb-6">
+            <button id="startMoveQuestion"
+                    class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                <span id="buttonText">Di chuyển câu hỏi</span>
+                <svg id="loadingSpinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div id="statusResult" class="mt-4 p-4 rounded-md hidden">
+            <p id="message" class="font-medium"></p>
+        </div>
+
+        <div id="detailedResults" class="mt-6 hidden">
+            <h3 class="text-lg font-medium text-gray-900 mb-3">Kết quả chi tiết:</h3>
+            <ul id="resultsList" class="list-disc list-inside space-y-2">
+                </ul>
+        </div>
+    </div>
+
+    <script src="question-move.js"></script>
+</body>
+</html>
