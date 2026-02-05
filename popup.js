@@ -252,6 +252,11 @@ document.addEventListener('DOMContentLoaded', () => {
         window.open(chrome.runtime.getURL('question-finder.html'));
     });
 
+    const openQuestionExporter = document.getElementById('openQuestionExporter');
+    openQuestionExporter.addEventListener('click', () => {
+        window.open(chrome.runtime.getURL('question-exporter.html'));
+    });
+
     // Thêm event listener cho các chức năng mở rộng khác tại đây sau này
     // if (openAnotherFeatureBtn) {
     //     openAnotherFeatureBtn.addEventListener('click', () => {

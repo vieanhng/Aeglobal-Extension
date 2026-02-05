@@ -379,4 +379,126 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         process();
         return true;
     }
+
+    if (request.action === "exportQuestions") {
+        const { uid, token, bankId, needsResolve } = request;
+
+        // Immediately return true to keep message channel open
+        (async () => {
+            try {
+                console.log(`Starting export for bank ${bankId} (needsResolve: ${needsResolve})`);
+
+                let actualBankId = bankId;
+
+                // Step 0: Resolve shortcode to actual ID if needed
+                if (needsResolve) {
+                    console.log(`Resolving shortcode: ${bankId}`);
+                    try {
+                        const resolveUrl = `${API_BASE}/content/api/item-detail?item_id=${bankId}&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
+
+                        const resolveResponse = await Promise.race([
+                            fetch(resolveUrl, { method: "POST" }),
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('Resolve timeout')), 10000))
+                        ]);
+
+                        const resolveData = await resolveResponse.json();
+
+                        if (resolveData.result && resolveData.result.target_item_iid) {
+                            actualBankId = resolveData.result.target_item_iid;
+                            console.log(`Resolved ${bankId} -> ${actualBankId}`);
+                        } else if (resolveData.message === 'no_permission_to_view_item') {
+                            console.error(`No permission to view item: ${bankId}`);
+                            sendResponse({
+                                status: "completed",
+                                result: { success: false, bankId, error: "Không có quyền truy cập" }
+                            });
+                            return;
+                        } else {
+                            console.error(`Failed to resolve shortcode: ${bankId}`);
+                            sendResponse({
+                                status: "completed",
+                                result: { success: false, bankId, error: "Không thể resolve shortcode" }
+                            });
+                            return;
+                        }
+                    } catch (resolveError) {
+                        console.error(`Error resolving shortcode ${bankId}:`, resolveError);
+                        sendResponse({
+                            status: "completed",
+                            result: { success: false, bankId, error: `Lỗi resolve: ${resolveError.message}` }
+                        });
+                        return;
+                    }
+                }
+
+                // Step 1: Get bank info with timeout
+                const bankUrl = `${API_BASE}/question-bank/editor/fetch-node?iid=${actualBankId}&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
+
+                const bankResponse = await Promise.race([
+                    fetch(bankUrl, { method: "POST" }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Bank fetch timeout')), 10000))
+                ]);
+
+                const bankData = await bankResponse.json();
+
+                if (!bankData.success || !bankData.result) {
+                    console.error(`Failed to fetch bank info for ID: ${actualBankId}`);
+                    sendResponse({
+                        status: "completed",
+                        result: { success: false, bankId: actualBankId, error: "Failed to fetch bank info" }
+                    });
+                    return;
+                }
+
+                const bankName = bankData.result.name || `Bank ${actualBankId}`;
+                console.log(`Bank name: ${bankName}`);
+
+                // Step 2: Search all questions in the bank with timeout
+                const searchUrl = `${API_BASE}/question/index/search?_sand_get_total=0&question_bank[]=${actualBankId}&items_per_page=-1&page=1&ntype=question&submit=1&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
+
+                const searchResponse = await Promise.race([
+                    fetch(searchUrl, { method: "POST" }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Search timeout')), 15000))
+                ]);
+
+                const searchData = await searchResponse.json();
+
+                if (searchData.success && searchData.result && searchData.result.length > 0) {
+                    // Extract all question IDs
+                    const questionIds = searchData.result.map(q => q.id);
+
+                    console.log(`Exported ${questionIds.length} questions from bank ${actualBankId} (${bankName})`);
+
+                    sendResponse({
+                        status: "completed",
+                        result: {
+                            success: true,
+                            bankId: actualBankId,
+                            bankName,
+                            questionIds
+                        }
+                    });
+                } else {
+                    console.log(`No questions found in bank ${actualBankId}`);
+                    sendResponse({
+                        status: "completed",
+                        result: {
+                            success: true,
+                            bankId: actualBankId,
+                            bankName,
+                            questionIds: []
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error(`Error exporting questions from bank ${bankId}:`, error);
+                sendResponse({
+                    status: "completed",
+                    result: { success: false, bankId, error: error.message }
+                });
+            }
+        })();
+
+        return true; // Keep message channel open for async response
+    }
 });
