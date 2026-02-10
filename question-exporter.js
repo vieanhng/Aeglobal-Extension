@@ -39,33 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Extract bank ID from URL or return as-is if already an ID
-    // Returns object: { id: string, needsResolve: boolean }
-    function extractBankId(input) {
-        const trimmed = input.trim();
-
-        // Check if it's a direct numeric ID
-        if (/^\d+$/.test(trimmed)) {
-            return { id: trimmed, needsResolve: false };
-        }
-
-        // Check if it's a URL with numeric ID: /question-bank/12345
-        const numericMatch = trimmed.match(/\/question-bank\/(\d+)/);
-        if (numericMatch) {
-            return { id: numericMatch[1], needsResolve: false };
-        }
-
-        // Check if it's a shortcode URL: /question-bank/abc123 or just abc123
-        const shortcodeMatch = trimmed.match(/\/folder\/([^\/\?]+)/) || trimmed.match(/^([a-zA-Z0-9_-]+)$/);
-        if (shortcodeMatch) {
-            return { id: shortcodeMatch[1], needsResolve: true };
-        }
-
-        // Fallback: treat as ID that might need resolution
-        return { id: trimmed, needsResolve: true };
-    }
-
-
     // Update progress
     function updateProgress(current, total) {
         const percentage = (current / total) * 100;
@@ -149,9 +122,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Extract bank IDs with resolution info
+        // Extract bank IDs with resolution info using shared module
         const bankIds = bankInputs
-            .map(extractBankId)
+            .map(input => SharedBankUtils.extractBankId(input))
             .filter(item => item && item.id && item.id.length > 0);
 
         if (bankIds.length === 0) {
