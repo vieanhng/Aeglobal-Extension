@@ -217,7 +217,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             const results = [];
 
             for (const bankLink of bankLinks) {
-                const bankId = bankLink.trim();
+                const bankId = bankLink;
                 const duplicatedQuestionMap = []; // Store mapping: { originalId, duplicatedId }
 
                 // Step 1: Duplicate all questions and track original IDs
@@ -293,7 +293,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     sendLogToUI(`[${i + 1}/${duplicatedQuestionMap.length}] Updating tags for question ID: ${item.duplicatedId} (original: ${item.originalId})`, 'info');
 
                     // Create auto tag: 'variant of {original question id}'
-                    const variantTag = `variant of ${item.duplicateObject.id}`;
+                    const variantTag = `variant of ${item.originalId}`;
 
                     // Combine auto tag with user-provided tags (if any)
                     const allTags = tags && tags.length > 0
