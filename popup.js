@@ -244,17 +244,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const openQuestionMover = document.getElementById('openQuestionMover');
     openQuestionMover.addEventListener('click', () => {
-        window.open(chrome.runtime.getURL('module/question-move.html'));
+        window.open(chrome.runtime.getURL('module/question-move/index.html'));
     });
 
     const openQuestionFinder = document.getElementById('openQuestionFinder');
     openQuestionFinder.addEventListener('click', () => {
-        window.open(chrome.runtime.getURL('module/question-finder.html'));
+        window.open(chrome.runtime.getURL('module/question-finder/index.html'));
     });
 
     const openQuestionExporter = document.getElementById('openQuestionExporter');
     openQuestionExporter.addEventListener('click', () => {
-        window.open(chrome.runtime.getURL('module/question-exporter.html'));
+        window.open(chrome.runtime.getURL('module/question-exporter/index.html'));
     });
 
     // Thêm event listener cho các chức năng mở rộng khác tại đây sau này
