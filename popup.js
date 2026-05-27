@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event Listeners cho các nút chức năng chính
     const openQuestionDuplicatorBtn = document.getElementById('openQuestionDuplicator');
     openQuestionDuplicatorBtn.addEventListener('click', () => {
-        window.open(chrome.runtime.getURL('module/question-duplicator.html'));
+        window.open(chrome.runtime.getURL('module/question-duplicator/index.html'));
     });
 
     const openQuestionMover = document.getElementById('openQuestionMover');
