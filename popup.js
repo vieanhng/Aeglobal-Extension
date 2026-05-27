@@ -257,6 +257,11 @@ document.addEventListener('DOMContentLoaded', () => {
         window.open(chrome.runtime.getURL('module/question-exporter/index.html'));
     });
 
+    const openBankIidViewer = document.getElementById('openBankIidViewer');
+    openBankIidViewer.addEventListener('click', () => {
+        window.open(chrome.runtime.getURL('module/bank-iid-viewer/index.html'));
+    });
+
     // Thêm event listener cho các chức năng mở rộng khác tại đây sau này
     // if (openAnotherFeatureBtn) {
     //     openAnotherFeatureBtn.addEventListener('click', () => {
