@@ -239,22 +239,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event Listeners cho các nút chức năng chính
     const openQuestionDuplicatorBtn = document.getElementById('openQuestionDuplicator');
     openQuestionDuplicatorBtn.addEventListener('click', () => {
-        window.open(chrome.runtime.getURL('question-duplicator.html'));
+        window.open(chrome.runtime.getURL('module/question-duplicator.html'));
     });
 
     const openQuestionMover = document.getElementById('openQuestionMover');
     openQuestionMover.addEventListener('click', () => {
-        window.open(chrome.runtime.getURL('question-move.html'));
+        window.open(chrome.runtime.getURL('module/question-move.html'));
     });
 
     const openQuestionFinder = document.getElementById('openQuestionFinder');
     openQuestionFinder.addEventListener('click', () => {
-        window.open(chrome.runtime.getURL('question-finder.html'));
+        window.open(chrome.runtime.getURL('module/question-finder.html'));
     });
 
     const openQuestionExporter = document.getElementById('openQuestionExporter');
     openQuestionExporter.addEventListener('click', () => {
-        window.open(chrome.runtime.getURL('question-exporter.html'));
+        window.open(chrome.runtime.getURL('module/question-exporter.html'));
     });
 
     // Thêm event listener cho các chức năng mở rộng khác tại đây sau này

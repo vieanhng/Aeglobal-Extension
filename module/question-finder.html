@@ -4,13 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Question Exporter</title>
-    <link href="lib/tailwind.min.css" rel="stylesheet">
+    <title>Question Finder</title>
+    <link href="../lib/tailwind.min.css" rel="stylesheet">
 </head>
 
 <body class="bg-gray-100 p-6 font-sans text-gray-800">
     <div class="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-8">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Xuất ID câu hỏi từ ngân hàng 📤</h1>
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Công cụ tìm câu hỏi ở ngân hàng nào 🔍</h1>
 
         <div class="mb-6 bg-blue-50 border border-blue-200 rounded-md p-4 text-sm text-blue-800">
             <p>UID đã lưu: <span id="displayUid" class="font-semibold">Đang tải...</span></p>
@@ -23,20 +23,20 @@
         <hr class="my-6 border-gray-200">
 
         <div class="mb-6">
-            <label for="bank-links" class="block text-sm font-medium text-gray-700 mb-1">
-                Link ngân hàng câu hỏi
-                <span class="text-gray-500 font-normal">(mỗi link một dòng hoặc nhập ID ngân hàng)</span>
+            <label for="question-ids" class="block text-sm font-medium text-gray-700 mb-1">
+                Danh sách ID câu hỏi
+                <span class="text-gray-500 font-normal">(mỗi ID một dòng)</span>
             </label>
-            <textarea id="bank-links" rows="5"
-                placeholder="Nhập link ngân hàng hoặc ID, mỗi link/ID trên một dòng&#10;Ví dụ:&#10;https://aeglobal.lotuslms.com/admin/question-bank/12345&#10;67890&#10;https://aeglobal2.lotuslms.com/admin/question-bank/11111"
+            <textarea id="question-ids" rows="8"
+                placeholder="Nhập ID câu hỏi, mỗi ID trên một dòng&#10;Ví dụ:&#10;12345&#10;67890&#10;11111"
                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm resize-y font-mono"></textarea>
-            <p class="mt-2 text-sm text-gray-500">💡 Mẹo: Có thể paste nhiều link hoặc ID cùng lúc, mỗi link/ID một dòng
-            </p>
+            <p class="mt-2 text-sm text-gray-500">💡 Mẹo: Có thể paste nhiều ID cùng lúc, mỗi ID một dòng</p>
         </div>
 
-        <div class="flex justify-center mb-6 space-x-3">
-            <button id="startExport"
+        <div class="flex justify-center mb-6">
+            <button id="startFindQuestion"
                 class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                <span id="buttonText">Tìm câu hỏi</span>
                 <svg id="loadingSpinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden"
                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -44,11 +44,6 @@
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                     </path>
                 </svg>
-                <span id="buttonText">Xuất ID câu hỏi</span>
-            </button>
-            <button id="copyAllIds"
-                class="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed hidden">
-                📋 Copy tất cả ID
             </button>
         </div>
 
@@ -64,24 +59,43 @@
             <p id="progressText" class="text-sm text-gray-600 mt-2 text-center">Đang xử lý: 0/0</p>
         </div>
 
-        <!-- Results section -->
-        <div id="resultsSection" class="mt-6 hidden">
+        <!-- Results table -->
+        <div id="detailedResults" class="mt-6 hidden">
             <div class="flex justify-between items-center mb-3">
-                <h3 class="text-lg font-medium text-gray-900">Kết quả xuất:</h3>
+                <h3 class="text-lg font-medium text-gray-900">Kết quả tìm kiếm:</h3>
                 <span id="resultsSummary" class="text-sm text-gray-600"></span>
             </div>
-
-            <!-- Export results by bank -->
-            <div id="bankResults" class="space-y-4">
-                <!-- Bank results will be dynamically inserted here -->
+            <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-blue-600">
+                        <tr>
+                            <th scope="col"
+                                class="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider w-16">
+                                #</th>
+                            <th scope="col"
+                                class="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider w-32">
+                                ID Câu hỏi</th>
+                            <th scope="col"
+                                class="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider w-24">
+                                Trạng thái</th>
+                            <th scope="col"
+                                class="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                Tên ngân hàng</th>
+                            <th scope="col"
+                                class="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                Link ngân hàng</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsTableBody" class="bg-white divide-y divide-gray-200">
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <script src="shared-auth.js"></script>
     <script src="shared-ui.js"></script>
-    <script src="shared-bank-utils.js"></script>
-    <script src="question-exporter.js"></script>
+    <script src="question-finder.js"></script>
 </body>
 
 </html>
