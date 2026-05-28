@@ -14,6 +14,7 @@ Extension hỗ trợ tự động hoá cho hệ thống **Aeglobal LotusLMS**, g
 | 🔍 Tìm câu hỏi | Tìm kiếm câu hỏi theo từ khoá hoặc ID |
 | ⬇️ Xuất ID câu hỏi | Xuất danh sách ID câu hỏi từ link ngân hàng |
 | 🏦 Tra cứu IID ngân hàng | Tra cứu thông tin IID của ngân hàng câu hỏi |
+| 🏷️ Badge IID trên folder | Tự hiển thị IID ngân hàng ở góc trên trang Content Manager folder khi folder trỏ tới `question_bank` |
 
 ---
 
@@ -130,6 +131,12 @@ Nhấn vào biểu tượng 🧩 (Extensions) → tìm Aeglobal Tools → nhấn
 <summary><strong>Tính năng "Lấy ngay" không lấy được thông tin xác thực?</strong></summary>
 
 Bạn cần đang mở tab **LotusLMS** (`aeglobal.lotuslms.com`) và đã đăng nhập vào hệ thống trước khi nhấn "Lấy ngay".
+</details>
+
+<details>
+<summary><strong>Badge IID trên trang folder hoạt động như thế nào?</strong></summary>
+
+Khi mở trang `/admin/content-manager/folder/...`, extension tự resolve shortcode qua `api/item-detail`. Badge chỉ hiển thị nếu kết quả có `target_item_type = question_bank`; nếu folder không trỏ tới ngân hàng câu hỏi thì badge sẽ tự ẩn.
 </details>
 
 <details>

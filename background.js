@@ -502,6 +502,55 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // Keep message channel open for async response
     }
     // ============================================================
+    // Content Script: Resolve IID ngân hàng từ shortcode trong URL
+    // ============================================================
+    if (request.action === 'resolveBankIidForPage') {
+        const { shortcode, uid, token } = request;
+
+        (async () => {
+            try {
+                // Bước 1: Resolve shortcode → target_item_iid
+                const resolveUrl = `${API_BASE}/content/api/item-detail?item_id=${shortcode}&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
+                const resolveResponse = await Promise.race([
+                    fetch(resolveUrl, { method: 'POST' }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+                ]);
+                const resolveData = await resolveResponse.json();
+
+                if (!resolveData.result || resolveData.result.target_item_type !== 'question_bank') {
+                    sendResponse({ success: false, shouldShowBadge: false });
+                    return;
+                }
+
+                if (!resolveData.result.target_item_iid) {
+                    const errMsg = resolveData.message === 'no_permission_to_view_item'
+                        ? 'Không có quyền truy cập'
+                        : 'Không resolve được IID';
+                    sendResponse({ success: false, error: errMsg });
+                    return;
+                }
+
+                const iid = resolveData.result.target_item_iid;
+
+                // Bước 2: Lấy tên ngân hàng
+                const bankUrl = `${API_BASE}/question-bank/editor/fetch-node?iid=${iid}&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
+                const bankResponse = await Promise.race([
+                    fetch(bankUrl, { method: 'POST' }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+                ]);
+                const bankData = await bankResponse.json();
+
+                const name = bankData.success && bankData.result ? bankData.result.name : null;
+                sendResponse({ success: true, iid, name });
+            } catch (err) {
+                sendResponse({ success: false, error: err.message });
+            }
+        })();
+
+        return true; // giữ channel mở cho async
+    }
+
+    // ============================================================
     // SidePanel: Lưu dữ liệu exercise được capture từ trang web
     // ============================================================
     if (request.type === 'AEGLOBAL_API_DATA') {

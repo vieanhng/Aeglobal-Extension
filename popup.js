@@ -273,6 +273,19 @@ document.addEventListener('DOMContentLoaded', () => {
         window.open(chrome.runtime.getURL('module/bank-iid-viewer/index.html'));
     });
 
+    // ── Cài đặt: Toggle hiển thị IID ngân hàng trên trang ────────
+    const toggleBankIidOverlay = document.getElementById('toggleBankIidOverlay');
+
+    // Đọc giá trị hiện tại từ storage (mặc định: bật)
+    chrome.storage.local.get({ showBankIidOverlay: true }, (data) => {
+        toggleBankIidOverlay.checked = data.showBankIidOverlay;
+    });
+
+    // Lưu khi thay đổi
+    toggleBankIidOverlay.addEventListener('change', () => {
+        chrome.storage.local.set({ showBankIidOverlay: toggleBankIidOverlay.checked });
+    });
+
     // Thêm event listener cho các chức năng mở rộng khác tại đây sau này
     // if (openAnotherFeatureBtn) {
     //     openAnotherFeatureBtn.addEventListener('click', () => {

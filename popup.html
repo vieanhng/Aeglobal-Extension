@@ -128,6 +128,61 @@
         .features-list::-webkit-scrollbar { width: 3px; }
         .features-list::-webkit-scrollbar-track { background: transparent; }
         .features-list::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 2px; }
+
+        /* ── Toggle Switch ── */
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            background: #ffffff;
+        }
+        .setting-label {
+            font-size: 12.5px;
+            color: #374151;
+            font-weight: 500;
+            flex: 1;
+            line-height: 1.35;
+        }
+        .setting-label small {
+            display: block;
+            font-size: 10.5px;
+            color: #9ca3af;
+            font-weight: 400;
+            margin-top: 1px;
+        }
+        .toggle-switch {
+            position: relative;
+            width: 34px;
+            height: 20px;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-track {
+            position: absolute;
+            inset: 0;
+            background: #d1d5db;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .toggle-track::before {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            left: 3px;
+            top: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .toggle-switch input:checked + .toggle-track { background: #ea580c; }
+        .toggle-switch input:checked + .toggle-track::before { transform: translateX(14px); }
     </style>
 </head>
 
@@ -232,6 +287,25 @@
             <span class="feat-arrow">›</span>
         </button>
 
+    </div>
+
+    <!-- ── Section Divider: Cài đặt ── -->
+    <div class="section-divider" style="margin-top: 12px;">
+        <span class="text-xs text-gray-300 font-medium">Cài đặt</span>
+    </div>
+
+    <!-- ── Settings ── -->
+    <div class="flex flex-col gap-1.5">
+        <div class="setting-row">
+            <label class="setting-label" for="toggleBankIidOverlay">
+                Hiển thị IID ngân hàng trên trang
+                <small>Tự động hiện badge IID khi vào trang thư mục ngân hàng</small>
+            </label>
+            <label class="toggle-switch">
+                <input type="checkbox" id="toggleBankIidOverlay" checked>
+                <span class="toggle-track"></span>
+            </label>
+        </div>
     </div>
 
     <script src="popup.js"></script>
