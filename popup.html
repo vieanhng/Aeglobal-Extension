@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 
 <head>
     <meta charset="UTF-8">
@@ -7,87 +7,231 @@
     <title>AEGlobal Tools</title>
     <link href="lib/tailwind.min.css" rel="stylesheet">
     <style>
-        body {
-            width: 320px;
-            padding: 20px;
+        * {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            box-sizing: border-box;
         }
 
-        .feature-button {
+        body {
+            width: 340px;
+            background: #f9fafb;
+            padding: 16px;
+            margin: 0;
+        }
+
+        /* Fade-in khi mở popup */
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        body { animation: fadeSlideIn 0.18s ease-out; }
+
+        /* Auth card */
+        .auth-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 12px 14px;
+        }
+
+        /* Online pulse dot */
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            flex-shrink: 0;
+        }
+        @keyframes dotPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+            50%       { box-shadow: 0 0 0 4px rgba(34,197,94,0); }
+        }
+        .status-dot { animation: dotPulse 2s infinite; }
+
+        /* Token mono truncate */
+        .token-mono {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #9ca3af;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 185px;
+            display: inline-block;
+        }
+
+        /* ── Feature buttons ── */
+        .feat-btn {
             display: flex;
             align-items: center;
-            justify-content: center;
-            padding: 12px 15px;
-            margin-bottom: 10px;
-            font-size: 1rem;
-            font-weight: 600;
+            gap: 10px;
+            width: 100%;
+            padding: 9px 12px;
             border-radius: 8px;
-            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            border: 1px solid #e5e7eb;
+            background: #ffffff;
             cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            text-align: left;
+            transition: border-color 0.15s, background 0.15s, transform 0.15s;
+            position: relative;
+            overflow: hidden;
+        }
+        .feat-btn:hover {
+            border-color: #fed7aa;
+            background: #fff7ed;
+            transform: translateX(2px);
         }
 
-        .feature-button:hover {
-            transform: translateY(-1px);
+        .feat-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+            flex: 1;
+            line-height: 1.35;
+            transition: color 0.15s;
         }
+        .feat-btn:hover .feat-label { color: #c2410c; }
+
+        .feat-arrow {
+            font-size: 14px;
+            color: #d1d5db;
+            transition: color 0.15s, transform 0.15s;
+            flex-shrink: 0;
+        }
+        .feat-btn:hover .feat-arrow {
+            color: #ea580c;
+            transform: translateX(3px);
+        }
+
+        /* ── Section divider ── */
+        .section-divider {
+            display: flex; align-items: center; gap: 8px;
+            margin: 12px 0 10px;
+        }
+        .section-divider::before,
+        .section-divider::after {
+            content: ''; flex: 1;
+            height: 1px; background: #f3f4f6;
+        }
+
+        /* ── Small action buttons ── */
+        .small-btn {
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 500;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        /* ── Scrollbar ── */
+        .features-list::-webkit-scrollbar { width: 3px; }
+        .features-list::-webkit-scrollbar-track { background: transparent; }
+        .features-list::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 2px; }
     </style>
 </head>
 
-<body class="font-sans text-gray-800 bg-gray-50">
-    <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">AEGlobal Tools</h1>
+<body>
 
-    <div id="authInfoSection" class="mb-6">
-        <div id="savedInfoDisplay"
-            class="bg-blue-100 border border-blue-300 rounded-lg p-4 text-sm text-blue-800 hidden">
-            <p class="font-semibold mb-1">Thông tin xác thực:</p>
-            <p>UID: <span id="displayUid" class="font-bold"></span></p>
-            <p>Token: <span id="displayToken" class="font-bold break-all"></span></p>
-            <p class="mt-1 text-gray-600 text-xs">Cập nhật: <span id="savedDate" class="font-semibold"></span></p>
-            <div class="flex justify-end mt-3 space-x-2">
-                <button id="updateAuthInfoBtn"
-                    class="px-3 py-1 bg-yellow-500 text-white text-xs font-semibold rounded hover:bg-yellow-600 transition">Cập
-                    nhật</button>
-                <button id="clearAuthInfoBtn"
-                    class="px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded hover:bg-red-600 transition">Xóa</button>
+    <!-- ── Header ── -->
+    <div class="mb-4">
+        <h1 class="text-base font-semibold text-gray-800">AEGlobal Tools</h1>
+        <p class="text-xs text-gray-400 mt-0.5">LotusLMS Extension</p>
+    </div>
+
+    <!-- ── Auth Section ── -->
+    <div id="authInfoSection">
+
+        <!-- Đã có thông tin -->
+        <div id="savedInfoDisplay" class="auth-card hidden">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-1.5">
+                    <div class="status-dot"></div>
+                    <span class="text-xs font-semibold text-gray-700">Đã xác thực</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button id="updateAuthInfoBtn"
+                        class="small-btn text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100">
+                        Cập nhật
+                    </button>
+                    <button id="clearAuthInfoBtn"
+                        class="small-btn text-red-500 bg-red-50 border-red-200 hover:bg-red-100">
+                        Xóa
+                    </button>
+                </div>
+            </div>
+            <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-400 w-9 flex-shrink-0">UID</span>
+                    <span id="displayUid" class="text-xs font-semibold text-gray-700"></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-400 w-9 flex-shrink-0">Token</span>
+                    <span id="displayToken" class="token-mono"></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-400 w-9 flex-shrink-0">Lưu</span>
+                    <span id="savedDate" class="text-xs text-gray-500"></span>
+                </div>
             </div>
         </div>
 
-        <div id="loginPromptSection"
-            class="bg-gray-200 border border-gray-300 rounded-lg p-4 text-sm text-gray-700 text-center hidden">
-            <p class="mb-3">Chưa có thông tin xác thực.</p>
-            <button id="getAuthInfoBtn"
-                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
-                Lấy thông tin từ trang web
-            </button>
+        <!-- Chưa có thông tin -->
+        <div id="loginPromptSection" class="auth-card hidden">
+            <div class="flex items-center gap-3">
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-medium text-gray-700">Chưa có thông tin xác thực</p>
+                    <p class="text-xs text-gray-400 mt-0.5">Mở LotusLMS để lấy tự động</p>
+                </div>
+                <button id="getAuthInfoBtn"
+                    class="flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-white bg-orange-600 hover:bg-orange-700 rounded-md transition-colors">
+                    Lấy ngay
+                </button>
+            </div>
         </div>
-        <p id="statusMessage" class="mt-3 text-sm text-center"></p>
+
+        <!-- Status message -->
+        <p id="statusMessage" class="mt-2 text-xs text-center min-h-4"></p>
     </div>
 
-    <hr class="my-6 border-gray-200">
+    <!-- ── Section Divider ── -->
+    <div class="section-divider">
+        <span class="text-xs text-gray-300 font-medium">Chức năng</span>
+    </div>
 
-    <div class="flex flex-col" style="max-height: 280px; overflow-y: scroll;">
-        <button id="openSidePanel" class="feature-button bg-gray-700 text-white hover:bg-gray-800 focus:ring-gray-500">
-            Xem câu hỏi trong phiếu
+    <!-- ── Feature Buttons ── -->
+    <div class="features-list flex flex-col gap-1.5" style="max-height: 260px; overflow-y: auto; padding-right: 2px;">
+
+        <button id="openSidePanel" class="feat-btn">
+            <span class="feat-label">Xem câu hỏi trong phiếu</span>
+            <span class="feat-arrow">›</span>
         </button>
-        <button id="openQuestionDuplicator"
-            class="feature-button bg-green-500 text-white hover:bg-green-600 focus:ring-green-500">
-            Nhân bản câu hỏi
+
+        <button id="openQuestionDuplicator" class="feat-btn">
+            <span class="feat-label">Nhân bản câu hỏi</span>
+            <span class="feat-arrow">›</span>
         </button>
-        <button id="openQuestionMover"
-            class="feature-button bg-green-500 text-white hover:bg-green-600 focus:ring-green-500">
-            Di chuyển câu hỏi
+
+        <button id="openQuestionMover" class="feat-btn">
+            <span class="feat-label">Di chuyển câu hỏi</span>
+            <span class="feat-arrow">›</span>
         </button>
-        <button id="openQuestionFinder"
-            class="feature-button bg-green-500 text-white hover:bg-green-600 focus:ring-green-500">
-            Tìm câu hỏi
+
+        <button id="openQuestionFinder" class="feat-btn">
+            <span class="feat-label">Tìm câu hỏi</span>
+            <span class="feat-arrow">›</span>
         </button>
-        <button id="openQuestionExporter"
-            class="feature-button bg-purple-500 text-white hover:bg-purple-600 focus:ring-purple-500">
-            Xuất ID câu hỏi <br> (từ link ngân hàng)
+
+        <button id="openQuestionExporter" class="feat-btn">
+            <span class="feat-label">Xuất ID câu hỏi <span class="text-gray-400 font-normal">(từ link ngân hàng)</span></span>
+            <span class="feat-arrow">›</span>
         </button>
-        <button id="openBankIidViewer"
-            class="feature-button bg-indigo-500 text-white hover:bg-indigo-600 focus:ring-indigo-500">
-            Tra cứu IID ngân hàng
+
+        <button id="openBankIidViewer" class="feat-btn">
+            <span class="feat-label">Tra cứu IID ngân hàng</span>
+            <span class="feat-arrow">›</span>
         </button>
+
     </div>
 
     <script src="popup.js"></script>
