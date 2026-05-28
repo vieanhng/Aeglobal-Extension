@@ -236,6 +236,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Xem câu hỏi trong phiếu"
+    const openSidePanelBtn = document.getElementById('openSidePanel');
+    openSidePanelBtn.addEventListener('click', () => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs[0]) {
+                chrome.sidePanel.open({ tabId: tabs[0].id });
+                window.close();
+            }
+        });
+    });
+
     // Event Listeners cho các nút chức năng chính
     const openQuestionDuplicatorBtn = document.getElementById('openQuestionDuplicator');
     openQuestionDuplicatorBtn.addEventListener('click', () => {

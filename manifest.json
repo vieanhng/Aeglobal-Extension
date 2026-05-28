@@ -6,13 +6,18 @@
     "permissions": [
         "activeTab",
         "storage",
-        "scripting"
+        "scripting",
+        "sidePanel"
     ],
     "host_permissions": [
         "https://aeglobal.lotuslms.com/*",
-        "https://aeglobal2.lotuslms.com/*"
+        "https://aeglobal2.lotuslms.com/*",
+        "<all_urls>"
     ],
     "options_page": "options.html",
+    "side_panel": {
+        "default_path": "module/sidepanel/sidepanel.html"
+    },
     "background": {
         "service_worker": "background.js"
     },
@@ -27,6 +32,18 @@
             ],
             "css": [
                 "lib/tailwind.min.css"
+            ],
+            "run_at": "document_start"
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "module/sidepanel/interceptor.js"
+            ],
+            "matches": [
+                "https://aeglobal.lotuslms.com/*",
+                "https://aeglobal2.lotuslms.com/*"
             ]
         }
     ],

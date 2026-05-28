@@ -501,4 +501,31 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         return true; // Keep message channel open for async response
     }
+    // ============================================================
+    // SidePanel: Lưu dữ liệu exercise được capture từ trang web
+    // ============================================================
+    if (request.type === 'AEGLOBAL_API_DATA') {
+        const { payload } = request;
+
+        chrome.storage.local.get({ history: [] }, (data) => {
+            const history = data.history;
+
+            // Thêm entry mới vào đầu danh sách
+            history.unshift(payload);
+
+            // Giữ tối đa 100 entries
+            if (history.length > 100) {
+                history.pop();
+            }
+
+            chrome.storage.local.set({ history });
+        });
+
+        return; // không cần sendResponse
+    }
 });
+
+// Mở sidepanel khi click action icon (giữ popup là default, sidepanel mở thủ công)
+chrome.sidePanel
+    .setPanelBehavior({ openPanelOnActionClick: false })
+    .catch((error) => console.error(error));

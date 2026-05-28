@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xem câu hỏi trong phiếu</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="sidepanel.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Xem câu hỏi trong phiếu</h1>
+            <div class="header-actions">
+                <span id="total-nodes">0</span> Phiếu
+                <button id="clear-btn">Xóa</button>
+            </div>
+        </header>
+
+        <main>
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Tìm ID hoặc nội dung...">
+            </div>
+
+            <details class="guide-section" id="guide-section">
+                <summary class="guide-toggle">
+                    <span class="guide-icon">📖</span>
+                    <span>Hướng dẫn sử dụng</span>
+                    <span class="guide-chevron">▾</span>
+                </summary>
+                <div class="guide-content">
+                    <ol class="guide-steps">
+                        <li>
+                            <span class="step-num">1</span>
+                            <div class="step-body">
+                                <strong>Mở phiếu cần xem</strong>
+                                <p>Mở Môn học và mở phiếu cần xem</p>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="step-num">2</span>
+                            <div class="step-body">
+                                <strong>Xem danh sách câu hỏi</strong>
+                                <p>Các câu hỏi sẽ xuất hiện bên dưới theo từng node. Dùng ô tìm kiếm để lọc theo ID hoặc
+                                    nội dung.</p>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="step-num">3</span>
+                            <div class="step-body">
+                                <strong>Sao chép ID</strong>
+                                <p>Nhấn <em>"Copy IID phiếu"</em> để sao chép ID của phiếu hoặc <em>"Copy
+                                        tất cả id câu hỏi"</em> để sao chép
+                                    toàn bộ ID.</p>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="step-num">4</span>
+                            <div class="step-body">
+                                <strong>Xóa dữ liệu</strong>
+                                <p>Nhấn <em>"Xóa"</em> ở góc trên phải để xóa toàn bộ dữ liệu đã thu thập.</p>
+                            </div>
+                        </li>
+                    </ol>
+                </div>
+            </details>
+
+            <nav class="node-nav" id="node-nav" hidden>
+                <button id="prev-btn" class="nav-btn" title="Phiếu trước">&#8592;</button>
+                <span id="node-indicator">1 / 1</span>
+                <button id="next-btn" class="nav-btn" title="Phiếu tiếp theo">&#8594;</button>
+            </nav>
+
+            <div id="nodes-container">
+                <!-- Nodes will be injected here -->
+            </div>
+        </main>
+    </div>
+
+    <template id="node-template">
+        <div class="node-card">
+            <div class="node-header">
+                <div class="node-info">
+                    <div class="node-iid-row">
+                        <span class="node-iid"></span>
+                        <button class="copy-node-iid" title="Copy IID phiếu">Copy IID</button>
+                    </div>
+                    <h3 class="node-name"></h3>
+                </div>
+                <div class="node-actions">
+                    <span class="node-time"></span>
+                    <button class="copy-all-btn" title="Copy all question IDs">Copy tất cả id câu hỏi</button>
+                </div>
+            </div>
+            <div class="questions-list">
+                <!-- Questions will be injected here -->
+            </div>
+        </div>
+    </template>
+
+    <template id="question-template">
+        <div class="question-item">
+            <div class="q-header">
+                <span class="q-iid"></span>
+                <span class="q-type"></span>
+                <button class="copy-q-id" title="Copy question ID">Copy</button>
+            </div>
+            <div class="q-content"></div>
+            <div class="q-clone-from-id"></div>
+        </div>
+    </template>
+
+    <script src="sidepanel.js"></script>
+</body>
+
+</html>
