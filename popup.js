@@ -247,6 +247,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    const openLotusExtractorBtn = document.getElementById('openLotusExtractor');
+    openLotusExtractorBtn.addEventListener('click', () => {
+        window.open(chrome.runtime.getURL('module/question-folder-extractor/index.html'));
+    });
+
     // Event Listeners cho các nút chức năng chính
     const openQuestionDuplicatorBtn = document.getElementById('openQuestionDuplicator');
     openQuestionDuplicatorBtn.addEventListener('click', () => {

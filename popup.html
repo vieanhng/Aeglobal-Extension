@@ -21,10 +21,20 @@
 
         /* Fade-in khi mở popup */
         @keyframes fadeSlideIn {
-            from { opacity: 0; transform: translateY(-6px); }
-            to   { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        body { animation: fadeSlideIn 0.18s ease-out; }
+
+        body {
+            animation: fadeSlideIn 0.18s ease-out;
+        }
 
         /* Auth card */
         .auth-card {
@@ -36,16 +46,28 @@
 
         /* Online pulse dot */
         .status-dot {
-            width: 8px; height: 8px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             background: #22c55e;
             flex-shrink: 0;
         }
+
         @keyframes dotPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
-            50%       { box-shadow: 0 0 0 4px rgba(34,197,94,0); }
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 0 4px rgba(34, 197, 94, 0);
+            }
         }
-        .status-dot { animation: dotPulse 2s infinite; }
+
+        .status-dot {
+            animation: dotPulse 2s infinite;
+        }
 
         /* Token mono truncate */
         .token-mono {
@@ -75,6 +97,7 @@
             position: relative;
             overflow: hidden;
         }
+
         .feat-btn:hover {
             border-color: #fed7aa;
             background: #fff7ed;
@@ -89,7 +112,10 @@
             line-height: 1.35;
             transition: color 0.15s;
         }
-        .feat-btn:hover .feat-label { color: #c2410c; }
+
+        .feat-btn:hover .feat-label {
+            color: #c2410c;
+        }
 
         .feat-arrow {
             font-size: 14px;
@@ -97,6 +123,7 @@
             transition: color 0.15s, transform 0.15s;
             flex-shrink: 0;
         }
+
         .feat-btn:hover .feat-arrow {
             color: #ea580c;
             transform: translateX(3px);
@@ -104,13 +131,18 @@
 
         /* ── Section divider ── */
         .section-divider {
-            display: flex; align-items: center; gap: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             margin: 12px 0 10px;
         }
+
         .section-divider::before,
         .section-divider::after {
-            content: ''; flex: 1;
-            height: 1px; background: #f3f4f6;
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #f3f4f6;
         }
 
         /* ── Small action buttons ── */
@@ -125,9 +157,18 @@
         }
 
         /* ── Scrollbar ── */
-        .features-list::-webkit-scrollbar { width: 3px; }
-        .features-list::-webkit-scrollbar-track { background: transparent; }
-        .features-list::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 2px; }
+        .features-list::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .features-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .features-list::-webkit-scrollbar-thumb {
+            background: #e5e7eb;
+            border-radius: 2px;
+        }
 
         /* ── Toggle Switch ── */
         .setting-row {
@@ -139,6 +180,7 @@
             border: 1px solid #e5e7eb;
             background: #ffffff;
         }
+
         .setting-label {
             font-size: 12.5px;
             color: #374151;
@@ -146,6 +188,7 @@
             flex: 1;
             line-height: 1.35;
         }
+
         .setting-label small {
             display: block;
             font-size: 10.5px;
@@ -153,6 +196,7 @@
             font-weight: 400;
             margin-top: 1px;
         }
+
         .toggle-switch {
             position: relative;
             width: 34px;
@@ -160,7 +204,13 @@
             flex-shrink: 0;
             margin-left: 10px;
         }
-        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
         .toggle-track {
             position: absolute;
             inset: 0;
@@ -169,6 +219,7 @@
             cursor: pointer;
             transition: background 0.2s;
         }
+
         .toggle-track::before {
             content: '';
             position: absolute;
@@ -179,10 +230,16 @@
             background: white;
             border-radius: 50%;
             transition: transform 0.2s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
         }
-        .toggle-switch input:checked + .toggle-track { background: #ea580c; }
-        .toggle-switch input:checked + .toggle-track::before { transform: translateX(14px); }
+
+        .toggle-switch input:checked+.toggle-track {
+            background: #ea580c;
+        }
+
+        .toggle-switch input:checked+.toggle-track::before {
+            transform: translateX(14px);
+        }
     </style>
 </head>
 
@@ -262,6 +319,12 @@
             <span class="feat-arrow">›</span>
         </button>
 
+        <button id="openLotusExtractor" class="feat-btn">
+            <span class="feat-label">Xuất câu hỏi từ folder <span
+                    class="text-orange-500 font-normal">(Excel/JSON)</span></span>
+            <span class="feat-arrow">›</span>
+        </button>
+
         <button id="openQuestionDuplicator" class="feat-btn">
             <span class="feat-label">Nhân bản câu hỏi</span>
             <span class="feat-arrow">›</span>
@@ -278,7 +341,8 @@
         </button>
 
         <button id="openQuestionExporter" class="feat-btn">
-            <span class="feat-label">Xuất ID câu hỏi <span class="text-gray-400 font-normal">(từ link ngân hàng)</span></span>
+            <span class="feat-label">Xuất ID câu hỏi <span class="text-gray-400 font-normal">(từ link ngân
+                    hàng)</span></span>
             <span class="feat-arrow">›</span>
         </button>
 
