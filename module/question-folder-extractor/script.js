@@ -435,6 +435,11 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (q.content_edit_status === 'rejected') statusBadgeClass = "bg-red-50 text-red-700 border-red-200";
             else if (q.content_edit_status === 'completed_editing') statusBadgeClass = "bg-blue-50 text-blue-700 border-blue-200";
 
+            let competencyText = '';
+            if (q.__expand && q.__expand.student_comptency_object) {
+                competencyText = q.__expand.student_comptency_object.map(c => c.name || '').join(', ');
+            }
+
             let skillsText = 'N/A';
             if (q.skills) {
                 if (Array.isArray(q.skills)) {
@@ -460,6 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="inline-block py-1 px-2 rounded-lg text-[10px] font-bold whitespace-nowrap border ${statusBadgeClass}">${statusText}</span>
                 </td>
                 <td class="px-4 py-3 border-b text-gray-600 whitespace-normal break-words align-top leading-normal">${skillsText}</td>
+                <td class="px-4 py-3 border-b text-gray-600 whitespace-normal break-words align-top leading-normal">${competencyText}</td>
                 <td class="px-4 py-3 border-b align-top max-w-xs">
                     <div class="question-content-wrapper custom-scrollbar text-gray-800 break-words whitespace-normal text-[11px] leading-relaxed">
                         ${contentSnippet}
@@ -694,7 +700,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 "Trạng thái": cleanExcelCell(getStatusDescription(q.content_edit_status)),
                 "Tags": cleanExcelCell((q.tags || []).join(', ')),
                 "Kỹ năng": cleanExcelCell(skillsText),
-                "Năng lực học sinh": cleanExcelCell(competencyText),
+                "Động từ": cleanExcelCell(competencyText),
                 "Nội dung (Không HTML)": cleanExcelCell(htmlToPlainText(q.content)),
                 "Nội dung (HTML)": cleanExcelCell(q.content),
                 "Các lựa chọn": cleanExcelCell(optionsText),

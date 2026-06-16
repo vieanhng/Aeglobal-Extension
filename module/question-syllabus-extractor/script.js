@@ -482,6 +482,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            let competencyText = '<em class="text-gray-400">(Không có động từ)</em>';
+            if (q.__expand && q.__expand.student_comptency_object) {
+                competencyText = q.__expand.student_comptency_object.map(c => c.name || '').join(', ');
+            }
+
             tr.innerHTML = `
                 <td class="px-4 py-3 border-b text-center text-gray-450 align-top font-semibold">${actualIndex}</td>
                 <td class="px-4 py-3 border-b text-gray-600 align-top font-mono font-medium">${q._source_syllabus_iid}</td>
@@ -497,6 +502,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="inline-block py-1 px-2 rounded-lg text-[10px] font-bold whitespace-nowrap border ${statusBadgeClass}">${statusText}</span>
                 </td>
                 <td class="px-4 py-3 border-b text-gray-600 whitespace-normal break-words align-top leading-normal">${skillsText}</td>
+                <td class="px-4 py-3 border-b text-gray-600 whitespace-normal break-words align-top leading-normal">${competencyText}</td>
                 <td class="px-4 py-3 border-b text-gray-650 align-top font-mono">${q._source_exercise_iid || 'N/A'}</td>
                 <td class="px-4 py-3 border-b text-gray-700 align-top whitespace-normal break-words font-medium">${q._source_exercise_name || 'N/A'}</td>
                 <td class="px-4 py-3 border-b align-top max-w-xs">
@@ -725,6 +731,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            let competencyText = '';
+            if (q.__expand && q.__expand.student_comptency_object) {
+                competencyText = q.__expand.student_comptency_object.map(c => c.name || '').join(', ');
+            }
+
             // Hint and Explanation extraction
             const hintHtml = (q.hints && q.hints[0] && q.hints[0].name) || '';
             const solHtml = (q.solutions && q.solutions[0] && q.solutions[0].name) || '';
@@ -738,6 +749,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 "Độ khó": cleanExcelCell(q.difficulty),
                 "Trạng thái": cleanExcelCell(getStatusDescription(q.content_edit_status)),
                 "Kỹ năng": cleanExcelCell(skillsText),
+                "Động từ": cleanExcelCell(competencyText),
                 "Exercise IID": cleanExcelCell(q._source_exercise_iid),
                 "Exercise Name": cleanExcelCell(q._source_exercise_name),
                 "Nội dung (Không HTML)": cleanExcelCell(htmlToPlainText(q.content)),
