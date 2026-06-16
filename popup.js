@@ -252,6 +252,11 @@ document.addEventListener('DOMContentLoaded', () => {
         window.open(chrome.runtime.getURL('module/question-folder-extractor/index.html'));
     });
 
+    const openSyllabusExtractorBtn = document.getElementById('openSyllabusExtractor');
+    openSyllabusExtractorBtn.addEventListener('click', () => {
+        window.open(chrome.runtime.getURL('module/question-syllabus-extractor/index.html'));
+    });
+
     // Event Listeners cho các nút chức năng chính
     const openQuestionDuplicatorBtn = document.getElementById('openQuestionDuplicator');
     openQuestionDuplicatorBtn.addEventListener('click', () => {

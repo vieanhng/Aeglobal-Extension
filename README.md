@@ -15,6 +15,8 @@ Extension hỗ trợ tự động hoá cho hệ thống **Aeglobal LotusLMS**, g
 | ⬇️ Xuất ID câu hỏi | Xuất danh sách ID câu hỏi từ link ngân hàng |
 | 🏦 Tra cứu IID ngân hàng | Tra cứu thông tin IID của ngân hàng câu hỏi |
 | 🏷️ Badge IID trên folder | Tự hiển thị IID ngân hàng ở góc trên trang Content Manager folder khi folder trỏ tới `question_bank` |
+| ⬇️ Xuất câu hỏi từ folder | Xuất danh sách câu hỏi từ folder |
+| ⬇️ Xuất câu hỏi từ syllabus | Xuất danh sách câu hỏi từ syllabus |
 
 ---
 

@@ -1,11 +1,11 @@
-// LotusLMS Question Extractor script.js
+// LotusLMS Syllabus Question Extractor script.js
 document.addEventListener('DOMContentLoaded', () => {
     // State variables
     let isRunning = false;
-    let allResults = [];
+    let globalQuestions = [];
     let currentPage = 1;
     let itemsPerPage = 20;
-    let stats = { folders: 0, banks: 0, questions: 0 };
+    let stats = { syllabus: 0, exercises: 0, questions: 0 };
     let currentUid = '';
     let currentToken = '';
 
@@ -14,9 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const displayToken = document.getElementById('displayToken');
     const displaySavedDate = document.getElementById('displaySavedDate');
 
+    const cfgSyllabusIdsInput = document.getElementById('cfg-syllabusIds');
     const cfgDomainInput = document.getElementById('cfg-domain');
-    const cfgParentIdInput = document.getElementById('cfg-parentId');
-    const cfgFilterInput = document.getElementById('cfg-filter');
+    const cfgTokenInput = document.getElementById('cfg-token');
+    const cfgUidInput = document.getElementById('cfg-uid');
+    const cfgAllowCacheInput = document.getElementById('cfg-allowCache');
 
     const btnStart = document.getElementById('btn-start');
     const btnClearLog = document.getElementById('btn-clear-log');
@@ -27,8 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const iconLoading = document.getElementById('icon-loading');
     const textStart = document.getElementById('text-start');
 
-    const statFolders = document.getElementById('stat-folders');
-    const statBanks = document.getElementById('stat-banks');
+    const statSyllabus = document.getElementById('stat-syllabus');
+    const statExercises = document.getElementById('stat-exercises');
     const statQuestions = document.getElementById('stat-questions');
 
     const logContainer = document.getElementById('log-container');
@@ -39,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const itemsPerPageSelect = document.getElementById('items-per-page');
     const pageNavWrapper = document.getElementById('page-nav-wrapper');
 
-    // Load credentials and inputs from storage
+    // Load credentials from storage using SharedAuth
     SharedAuth.loadAuthData((authData) => {
         currentUid = authData.uid;
         currentToken = authData.token;
@@ -50,11 +52,15 @@ document.addEventListener('DOMContentLoaded', () => {
             displaySavedDate
         });
 
+        // Prepopulate token and uid input fields too
+        if (currentToken) cfgTokenInput.value = currentToken;
+        if (currentUid) cfgUidInput.value = currentUid;
+
         // Load previously saved inputs if any
-        chrome.storage.local.get(['extractorDomain', 'extractorParentId', 'extractorFilter'], (data) => {
-            if (data.extractorDomain) cfgDomainInput.value = data.extractorDomain;
-            if (data.extractorParentId) cfgParentIdInput.value = data.extractorParentId;
-            if (data.extractorFilter) cfgFilterInput.value = data.extractorFilter;
+        chrome.storage.local.get(['syllabusExtractorIds', 'syllabusExtractorDomain', 'syllabusExtractorAllowCache'], (data) => {
+            if (data.syllabusExtractorIds) cfgSyllabusIdsInput.value = data.syllabusExtractorIds;
+            if (data.syllabusExtractorDomain) cfgDomainInput.value = data.syllabusExtractorDomain;
+            if (data.syllabusExtractorAllowCache) cfgAllowCacheInput.value = data.syllabusExtractorAllowCache;
         });
     });
 
@@ -172,8 +178,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // UI State Helpers
     function updateStatsUI() {
-        statFolders.innerText = stats.folders;
-        statBanks.innerText = stats.banks;
+        statSyllabus.innerText = stats.syllabus;
+        statExercises.innerText = stats.exercises;
         statQuestions.innerText = stats.questions;
     }
 
@@ -185,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btnStart.disabled = true;
             iconPlay.style.display = 'none';
             iconLoading.style.display = 'block';
-            textStart.innerText = 'Đang trích xuất...';
+            textStart.innerText = 'Đang thống kê...';
             btnDownloadJson.style.display = 'none';
             btnDownloadExcel.style.display = 'none';
             resultsCard.classList.add('hidden');
@@ -195,8 +201,8 @@ document.addEventListener('DOMContentLoaded', () => {
             btnStart.disabled = false;
             iconPlay.style.display = 'block';
             iconLoading.style.display = 'none';
-            textStart.innerText = 'Bắt đầu trích xuất';
-            if (allResults.length > 0) {
+            textStart.innerText = 'Bắt đầu thống kê';
+            if (globalQuestions.length > 0) {
                 btnDownloadJson.style.display = 'flex';
                 btnDownloadExcel.style.display = 'flex';
                 resultsCard.classList.remove('hidden');
@@ -244,152 +250,184 @@ document.addEventListener('DOMContentLoaded', () => {
         return div.innerHTML;
     }
 
-    // Build Form Data for LotusLMS APIs
-    function buildFormData(url, config) {
-        const fd = new FormData();
-        fd.append("_sand_web_url", url);
-        fd.append("_sand_device_uuid", generateUUID());
-        fd.append("_sand_token", currentToken);
-        fd.append("_sand_uiid", currentUid);
-        return fd;
-    }
+    // Recursive crawler function
+    function extractQuestionsRecursively(node, context) {
+        let questions = [];
 
-    // Fetch folder content
-    async function fetchFolderContent(folderId, config) {
-        const url = `https://cloud-beta-api.lotuslms.com/content/api/search-content?_sand_get_total=0&parent_id=${folderId}&items_per_page=-1&depth=1&submit=1&page=1&_sand_ajax=1&_sand_platform=3&_sand_readmin=1&_sand_is_wan=false&_sand_domain=${config.domain}&allow_cache_api_cdn=1`;
+        // Clone current context to pass down the tree (avoid side-effects)
+        let currentContext = { ...context };
 
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                body: buildFormData(`https://${config.domain}.lotuslms.com/admin/content-manager/folder/${folderId}`, config)
-            });
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const data = await response.json();
-            return data.result || [];
-        } catch (error) {
-            addLog(`Lỗi khi đọc thư mục ${folderId}: ${error.message}`, 'error');
-            return [];
-        }
-    }
-
-    // Fetch questions from bank
-    async function fetchQuestionsFromBank(bankIid, itemId, config) {
-        const url = `https://cloud-beta-api.lotuslms.com/question-bank/search-questions?_sand_get_total=0&question_bank%5B%5D=${bankIid}&submit=1&page=1&items_per_page=-1&_sand_ajax=1&_sand_platform=3&_sand_readmin=1&_sand_is_wan=false&_sand_domain=${config.domain}&allow_cache_api_cdn=1`;
-
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                body: buildFormData(`https://${config.domain}.lotuslms.com/admin/content-manager/folder/${itemId}`, config)
-            });
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const data = await response.json();
-            return data.result || [];
-        } catch (error) {
-            addLog(`Lỗi tải câu hỏi từ Ngân hàng ${bankIid}: ${error.message}`, 'error');
-            return [];
-        }
-    }
-
-    // Recursive crawler
-    async function processRecursively(currentFolderId, config) {
-        addLog(`Đang quét thư mục: ${currentFolderId}...`, 'info');
-        const items = await fetchFolderContent(currentFolderId, config);
-
-        let localQuestions = [];
-
-        for (const item of items) {
-            if (item.type === 'folder') {
-                stats.folders++;
+        if (node) {
+            if (node.ntype === 'syllabus') {
+                currentContext.syllabusName = node.name || currentContext.syllabusName;
+            } else if (node.ntype === 'exercise') {
+                currentContext.exerciseIid = node.iid;
+                currentContext.exerciseName = node.name;
+                stats.exercises++;
                 updateStatsUI();
-                addLog(`Phát hiện thư mục con: ${item.name} (${item.id})`, 'info');
-                const childQuestions = await processRecursively(item.id, config);
-                localQuestions = localQuestions.concat(childQuestions);
             }
-            else if (item.type === 'file' && item.target_item_type === 'question_bank') {
-                stats.banks++;
-                updateStatsUI();
-                addLog(`Phát hiện Ngân hàng câu hỏi: ${item.name} (IID: ${item.target_item_iid})`, 'success');
 
-                let questions = await fetchQuestionsFromBank(item.target_item_iid, item.id, config);
-
-                // Filter by keyword in raw JSON string if filter keyword specified
-                if (config.filterKeyword) {
-                    const originalCount = questions.length;
-                    questions = questions.filter(q => JSON.stringify(q).toLowerCase().includes(config.filterKeyword.toLowerCase()));
-                    if (originalCount !== questions.length) {
-                        addLog(`Bộ lọc: Giữ lại ${questions.length}/${originalCount} câu hỏi chứa "${config.filterKeyword}"`, 'info');
-                    }
-                }
-
-                // Enrich question object with source metadata
-                const enrichedQuestions = questions.map(q => ({
-                    ...q,
-                    _source_folder_name: item.name,
-                    _source_folder_id: currentFolderId,
-                    _source_bank_iid: item.target_item_iid
-                }));
-
-                stats.questions += questions.length;
-                updateStatsUI();
-                addLog(`Đã tải thành công ${questions.length} câu hỏi từ [${item.name}]`, 'success');
-                localQuestions = localQuestions.concat(enrichedQuestions);
+            // If the current node is a question
+            if (node.ntype === 'question') {
+                node._source_syllabus_iid = currentContext.syllabusIid;
+                node._source_syllabus_name = currentContext.syllabusName;
+                node._source_exercise_iid = currentContext.exerciseIid;
+                node._source_exercise_name = currentContext.exerciseName;
+                questions.push(node);
             }
         }
-        return localQuestions;
+
+        // Recursive traversal
+        if (node && Array.isArray(node.children) && node.children.length > 0) {
+            for (const child of node.children) {
+                questions = questions.concat(extractQuestionsRecursively(child, currentContext));
+            }
+        }
+
+        return questions;
     }
 
-    // Crawling trigger
+    // Single syllabus fetch and parse
+    async function fetchAndExtractSingle(iid, config) {
+        const url = new URL('https://cloud-beta-api.lotuslms.com/api/v2/syllabus/get');
+        url.searchParams.append('ntype', 'syllabus');
+        url.searchParams.append('depth', '-1');
+        url.searchParams.append('iid', iid);
+        url.searchParams.append('partial', 'true');
+        url.searchParams.append('submit', '1');
+        url.searchParams.append('_sand_ajax', '1');
+        url.searchParams.append('_sand_platform', '3');
+        url.searchParams.append('_sand_readmin', '1');
+        url.searchParams.append('_sand_is_wan', 'false');
+        url.searchParams.append('_sand_session_id', '61b05c75-17b6-40dd-9ad8-211cf16644c2');
+        url.searchParams.append('_sand_domain', config.domain);
+        url.searchParams.append('_sand_use_internal_network', '0');
+        url.searchParams.append('allow_cache_api_cdn', config.allowCache);
+        url.searchParams.append('editing_syllabus', '2');
+        url.searchParams.append('lang', 'vn');
+
+        const formData = new FormData();
+        formData.append('_sand_web_url', `https://${config.domain}.lotuslms.com/admin/materials/syllabus/${iid}/children`);
+        formData.append('_sand_device_uuid', generateUUID());
+        formData.append('_sand_token', config.token);
+        formData.append('_sand_uiid', config.uid);
+        formData.append('_sand_uid', '6576b1b5d18d78fd5f032742');
+
+        formData.append('_sand_ri', '8002e9e2607a500dd3a7e15ef478c828');
+        formData.append('_sand_rit', '1726ad1ccf4fce86279e9bf4b3c56c51:9htUVMS6P3LtsyC6DjEVct8uWCLQ3k63qA6HTl6tuY1vpAyJTUu1larCccliph48');
+
+        const options = {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json, text/plain, */*'
+            },
+            body: formData
+        };
+
+        const response = await fetch(url.toString(), options);
+        if (!response.ok) {
+            throw new Error(`HTTP Error ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (!data.success) {
+            throw new Error(data.message || `API returned success=false.`);
+        }
+
+        let syllabusData = data.result;
+
+        // If data is cached on S3
+        if (data.is_s3_object_url && data.result && data.result.object_url) {
+            addLog(`[Syllabus ${iid}] Dữ liệu được cache, đang tải file từ S3...`, 'info');
+            const s3Response = await fetch(data.result.object_url);
+            if (!s3Response.ok) {
+                throw new Error(`Không thể tải dữ liệu cache từ S3 (HTTP ${s3Response.status}).`);
+            }
+            const s3Data = await s3Response.json();
+            syllabusData = s3Data.result !== undefined ? s3Data.result : s3Data;
+        }
+
+        if (!syllabusData) {
+            throw new Error(`Không tìm thấy dữ liệu Syllabus hợp lệ.`);
+        }
+
+        const initialContext = {
+            syllabusIid: iid,
+            syllabusName: syllabusData.name || 'N/A',
+            exerciseIid: 'N/A',
+            exerciseName: 'N/A'
+        };
+
+        const extracted = extractQuestionsRecursively(syllabusData, initialContext);
+        globalQuestions = globalQuestions.concat(extracted);
+        stats.syllabus++;
+        updateStatsUI();
+
+        addLog(`Đã trích xuất thành công ${extracted.length} câu hỏi từ Syllabus ID ${iid}.`, 'success');
+    }
+
+    // Trigger crawl process
     async function startExtraction() {
-        const domain = cfgDomainInput.value.trim();
-        const parentId = cfgParentIdInput.value.trim();
-        const filterKeyword = cfgFilterInput.value.trim();
+        const rawIds = cfgSyllabusIdsInput.value;
+        const ids = rawIds.split(/[\n,]+/).map(id => id.trim()).filter(id => id !== '');
 
-        if (!SharedAuth.validateAuth(currentUid, currentToken)) {
-            addLog('Lỗi: Chưa có thông tin xác thực (UID và Token trống). Vui lòng đồng bộ từ popup extension.', 'error');
-            alert('Vui lòng đồng bộ thông tin xác thực từ extension popup trước!');
+        const domain = cfgDomainInput.value.trim();
+        const token = cfgTokenInput.value.trim();
+        const uid = cfgUidInput.value.trim();
+        const allowCache = cfgAllowCacheInput.value.trim();
+
+        if (ids.length === 0) {
+            alert("Vui lòng nhập ít nhất 1 Syllabus IID!");
             return;
         }
 
-        if (!parentId) {
-            addLog('Lỗi: Vui lòng nhập ID thư mục cần quét.', 'error');
-            alert('Vui lòng nhập ID thư mục cần quét!');
+        if (!token || !uid) {
+            alert("Vui lòng nhập đầy đủ Token và UID để gọi API!");
             return;
         }
 
         // Save inputs to storage for convenience
         chrome.storage.local.set({
-            extractorDomain: domain,
-            extractorParentId: parentId,
-            extractorFilter: filterKeyword
+            syllabusExtractorIds: rawIds,
+            syllabusExtractorDomain: domain,
+            syllabusExtractorAllowCache: allowCache
         });
 
-        const config = { domain, parentId, filterKeyword };
-
         // Reset UI & State
-        setRunningState(true);
+        globalQuestions = [];
+        currentPage = 1;
+        stats = { syllabus: 0, exercises: 0, questions: 0 };
+        updateStatsUI();
         logContainer.innerHTML = '';
-        allResults = [];
-        stats = { folders: 0, banks: 0, questions: 0 };
+        setRunningState(true);
+
+        addLog(`Bắt đầu xử lý danh sách ${ids.length} Syllabus IIDs...`, 'info');
+
+        const config = { domain, token, uid, allowCache };
+
+        for (const iid of ids) {
+            addLog(`Đang gửi yêu cầu lấy dữ liệu cho Syllabus ID: ${iid}...`, 'info');
+            try {
+                await fetchAndExtractSingle(iid, config);
+            } catch (error) {
+                addLog(`Lỗi khi xử lý Syllabus ${iid}: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        stats.questions = globalQuestions.length;
         updateStatsUI();
 
-        addLog(`Bắt đầu trích xuất đệ quy từ thư mục gốc: ${parentId}`, 'info');
-
-        try {
-            allResults = await processRecursively(parentId, config);
-            addLog(`Trích xuất hoàn tất! Tìm thấy tổng cộng ${allResults.length} câu hỏi.`, 'success');
-        } catch (error) {
-            addLog(`Lỗi hệ thống trong lúc quét: ${error.message}`, 'error');
-        } finally {
-            setRunningState(false);
-        }
+        addLog(`Hoàn tất! Tìm thấy tổng cộng ${globalQuestions.length} câu hỏi.`, 'success');
+        setRunningState(false);
     }
 
     // Render detailed HTML result table
     function renderTable() {
         resultTbody.innerHTML = '';
-        totalBadge.textContent = `Tổng ${allResults.length} câu hỏi`;
+        totalBadge.textContent = `Tổng ${globalQuestions.length} câu hỏi`;
 
-        if (allResults.length === 0) {
+        if (globalQuestions.length === 0) {
             resultTbody.innerHTML = `
                 <tr>
                     <td colspan="11" class="px-4 py-8 text-center text-red-500 font-medium">
@@ -400,7 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const totalItems = allResults.length;
+        const totalItems = globalQuestions.length;
         const totalPages = itemsPerPage === 'all' ? 1 : Math.ceil(totalItems / itemsPerPage);
 
         if (currentPage > totalPages) currentPage = totalPages;
@@ -414,7 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
             endIndex = startIndex + itemsPerPage;
         }
 
-        const currentItems = allResults.slice(startIndex, endIndex);
+        const currentItems = globalQuestions.slice(startIndex, endIndex);
 
         currentItems.forEach((q, index) => {
             const tr = document.createElement('tr');
@@ -446,10 +484,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             tr.innerHTML = `
                 <td class="px-4 py-3 border-b text-center text-gray-450 align-top font-semibold">${actualIndex}</td>
-                <td class="px-4 py-3 border-b text-gray-600 align-top font-mono font-medium">${q.id || q.iid || 'N/A'}</td>
-                <td class="px-4 py-3 border-b text-gray-700 align-top whitespace-normal break-words font-medium">${q._source_folder_name || 'N/A'}</td>
-                <td class="px-4 py-3 border-b text-gray-650 align-top font-mono">${q._source_folder_id || 'N/A'}</td>
-                <td class="px-4 py-3 border-b text-gray-600 align-top font-mono">${q._source_bank_iid || 'N/A'}</td>
+                <td class="px-4 py-3 border-b text-gray-600 align-top font-mono font-medium">${q._source_syllabus_iid}</td>
+                <td class="px-4 py-3 border-b text-gray-700 align-top whitespace-normal break-words font-medium">${q._source_syllabus_name || 'N/A'}</td>
+                <td class="px-4 py-3 border-b text-gray-600 align-top font-mono">${q.id || q.iid || 'N/A'}</td>
                 <td class="px-4 py-3 border-b text-gray-600 align-top">
                     <span class="inline-block bg-gray-100 text-gray-700 py-1 px-2 rounded-lg text-[10px] font-bold whitespace-nowrap border border-gray-200">${getQuestionTypeName(q.type, q.tpl_type)}</span>
                 </td>
@@ -460,6 +497,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="inline-block py-1 px-2 rounded-lg text-[10px] font-bold whitespace-nowrap border ${statusBadgeClass}">${statusText}</span>
                 </td>
                 <td class="px-4 py-3 border-b text-gray-600 whitespace-normal break-words align-top leading-normal">${skillsText}</td>
+                <td class="px-4 py-3 border-b text-gray-650 align-top font-mono">${q._source_exercise_iid || 'N/A'}</td>
+                <td class="px-4 py-3 border-b text-gray-700 align-top whitespace-normal break-words font-medium">${q._source_exercise_name || 'N/A'}</td>
                 <td class="px-4 py-3 border-b align-top max-w-xs">
                     <div class="question-content-wrapper custom-scrollbar text-gray-800 break-words whitespace-normal text-[11px] leading-relaxed">
                         ${contentSnippet}
@@ -537,34 +576,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Export to JSON file
+    // Change number of items per page
+    itemsPerPageSelect.addEventListener('change', () => {
+        const val = itemsPerPageSelect.value;
+        itemsPerPage = val === 'all' ? 'all' : parseInt(val, 10);
+        currentPage = 1; // Reset to page 1
+        renderTable();
+    });
+
+    // Clear logs screen
+    btnClearLog.addEventListener('click', () => {
+        logContainer.innerHTML = '<p class="text-gray-550 italic log-placeholder">Đã xóa sạch console log.</p>';
+    });
+
+    // Export JSON file format
     function downloadJSON() {
-        const parentId = cfgParentIdInput.value.trim();
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allResults, null, 2));
+        if (globalQuestions.length === 0) return;
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(globalQuestions, null, 4));
         const downloadAnchorNode = document.createElement('a');
         downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", `lotus_questions_${parentId}.json`);
+        downloadAnchorNode.setAttribute("download", `syllabus_questions_${new Date().getTime()}.json`);
         document.body.appendChild(downloadAnchorNode);
         downloadAnchorNode.click();
         downloadAnchorNode.remove();
-        addLog(`Đã xuất và tải tệp JSON.`, 'success');
+        addLog(`Đã xuất và tải tệp JSON thành công.`, 'success');
     }
 
-    // Export to Excel file with choices grouped in one column and answers in another
+    // Export formatted XLSX file using SheetJS
     function downloadExcel() {
-        const parentId = cfgParentIdInput.value.trim();
-        if (allResults.length === 0) {
+        if (globalQuestions.length === 0) {
             addLog('Không có câu hỏi để xuất Excel.', 'error');
             return;
         }
 
         addLog('Đang chuẩn bị dữ liệu xuất Excel...', 'info');
 
-        // Map questions array to flat rows with fixed columns
-        const rows = allResults.map((q, idx) => {
+        // Map questions to flat columns matching the visual table structure
+        const rows = globalQuestions.map((q, idx) => {
             let optionsText = '';
             let correctAnswers = '';
 
+            // Extract question types (copied and updated from question-folder-extractor/script.js)
             if (q.type === 2 || q.type === 17) {
                 // Multiple choice & select
                 const choices = q.mc_answers || q.answers2 || [];
@@ -582,8 +634,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 correctAnswers = correctLetters.join(', ');
 
             } else if (q.type === 1) {
-                // Fill-in / Typing. correct answer is answers field
-                optionsText = ''; // No options for typing questions
+                // Fill-in / Typing
+                optionsText = '';
                 const blanks = q.answers || [];
                 correctAnswers = blanks.map((blankOptions, idx) => {
                     const optionsStr = Array.isArray(blankOptions) ? blankOptions.join(' | ') : blankOptions;
@@ -673,49 +725,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Competency formatting
-            let competencyText = '';
-            if (q.__expand && q.__expand.student_comptency_object) {
-                competencyText = q.__expand.student_comptency_object.map(c => c.name || '').join(', ');
-            }
-
             // Hint and Explanation extraction
             const hintHtml = (q.hints && q.hints[0] && q.hints[0].name) || '';
             const solHtml = (q.solutions && q.solutions[0] && q.solutions[0].name) || '';
 
-            const row = {
+            return {
                 "STT": idx + 1,
-                "Mã câu hỏi (ID)": cleanExcelCell(q.id || q.iid),
-                "Thư mục nguồn": cleanExcelCell(q._source_folder_name),
-                "ID thư mục nguồn": cleanExcelCell(q._source_folder_id),
-                "IID ngân hàng": cleanExcelCell(q._source_bank_iid),
+                "Syllabus IID": cleanExcelCell(q._source_syllabus_iid),
+                "Syllabus Name": cleanExcelCell(q._source_syllabus_name),
+                "ID câu hỏi": cleanExcelCell(q.id || q.iid),
                 "Loại câu hỏi": cleanExcelCell(getQuestionTypeName(q.type, q.tpl_type)),
                 "Độ khó": cleanExcelCell(q.difficulty),
                 "Trạng thái": cleanExcelCell(getStatusDescription(q.content_edit_status)),
-                "Tags": cleanExcelCell((q.tags || []).join(', ')),
                 "Kỹ năng": cleanExcelCell(skillsText),
-                "Năng lực học sinh": cleanExcelCell(competencyText),
+                "Exercise IID": cleanExcelCell(q._source_exercise_iid),
+                "Exercise Name": cleanExcelCell(q._source_exercise_name),
                 "Nội dung (Không HTML)": cleanExcelCell(htmlToPlainText(q.content)),
                 "Nội dung (HTML)": cleanExcelCell(q.content),
                 "Các lựa chọn": cleanExcelCell(optionsText),
-                "Đáp án đúng": cleanExcelCell(correctAnswers),
-                "Đáp án (JSON thô)": cleanExcelCell(getAnswers(q)),
+                "Đáp án đúng (Định dạng)": cleanExcelCell(correctAnswers),
                 "Giải thích (Không HTML)": cleanExcelCell(htmlToPlainText(solHtml)),
                 "Giải thích (HTML)": cleanExcelCell(solHtml),
                 "Gợi ý (Không HTML)": cleanExcelCell(htmlToPlainText(hintHtml)),
-                "Gợi ý (HTML)": cleanExcelCell(hintHtml)
+                "Gợi ý (HTML)": cleanExcelCell(hintHtml),
+                "Đáp án (JSON thô)": cleanExcelCell(getAnswers(q))
             };
-
-            return row;
         });
 
         try {
-            // 3. Create Workbook and Worksheet with SheetJS
+            // Create Workbook & Worksheet using SheetJS
             const ws = XLSX.utils.json_to_sheet(rows);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Danh sách câu hỏi");
+            XLSX.utils.book_append_sheet(wb, ws, "Syllabus Questions");
 
-            // 4. Generate binary data and trigger click download
+            // Generate binary representation and download
             const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
 
             function s2ab(s) {
@@ -730,35 +773,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", url);
-            downloadAnchorNode.setAttribute("download", `lotus_questions_${parentId}.xlsx`);
+            downloadAnchorNode.setAttribute("download", `syllabus_questions_${new Date().getTime()}.xlsx`);
             document.body.appendChild(downloadAnchorNode);
 
             downloadAnchorNode.click();
             downloadAnchorNode.remove();
             URL.revokeObjectURL(url);
 
-            addLog(`Đã xuất và tải tệp Excel thành công (${allResults.length} câu hỏi).`, 'success');
+            addLog(`Đã xuất và tải tệp Excel thành công (${globalQuestions.length} câu hỏi).`, 'success');
         } catch (error) {
             addLog(`Lỗi xuất Excel: ${error.message}`, 'error');
             console.error(error);
         }
     }
 
-    // Event Listeners
+    // Register button event handlers
     btnStart.addEventListener('click', startExtraction);
-
-    btnClearLog.addEventListener('click', () => {
-        logContainer.innerHTML = '<p class="text-gray-550 italic log-placeholder">Đã xóa sạch console log.</p>';
-    });
-
     btnDownloadJson.addEventListener('click', downloadJSON);
     btnDownloadExcel.addEventListener('click', downloadExcel);
-
-    // Change number of items per page
-    itemsPerPageSelect.addEventListener('change', () => {
-        const val = itemsPerPageSelect.value;
-        itemsPerPage = val === 'all' ? 'all' : parseInt(val, 10);
-        currentPage = 1; // Reset to page 1
-        renderTable();
-    });
 });
