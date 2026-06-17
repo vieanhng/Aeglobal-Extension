@@ -13,17 +13,24 @@ echo ===== EXTRACT =====
 IF EXIST %EXTRACT_DIR% rmdir /s /q %EXTRACT_DIR%
 powershell -Command "Expand-Archive -Force %ZIP_FILE% %EXTRACT_DIR%"
 
-echo ===== UPDATE FILES =====
-
-REM Xác định folder sau khi unzip (GitHub luôn tạo thêm 1 cấp)
+REM Lấy folder source
 FOR /D %%i IN (%EXTRACT_DIR%\*) DO SET SOURCE_DIR=%%i
 
-REM Copy đè toàn bộ file (trừ chính file update.bat)
-xcopy "%SOURCE_DIR%\*" "%CURRENT_DIR%\" /E /H /Y /EXCLUDE:update_exclude.txt
+echo ===== CREATE TEMP SCRIPT =====
 
-echo ===== CLEAN =====
-del %ZIP_FILE%
-rmdir /s /q %EXTRACT_DIR%
+SET TEMP_UPDATE=%TEMP%\update_run.bat
 
-echo ===== DONE =====
-pause
+(
+echo @echo off
+echo echo Updating files...
+echo xcopy "%SOURCE_DIR%\*" "%CURRENT_DIR%\" /E /H /Y
+echo echo Done update
+echo timeout /t 1 ^>nul
+echo del "%%~f0"
+) > %TEMP_UPDATE%
+
+echo ===== RUN TEMP SCRIPT =====
+start "" cmd /c %TEMP_UPDATE%
+
+echo ===== EXIT MAIN SCRIPT =====
+exit
