@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hướng dẫn sử dụng Module Phân quyền - LotusLMS</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --text: #1e293b;
+      --text-dark: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --danger: #ef4444;
+      --success: #10b981;
+      --warning: #f59e0b;
+    }
+
+    body {
+      margin: 0;
+      padding: 40px 20px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      background: var(--panel);
+      padding: 40px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    }
+
+    h1 {
+      font-size: 28px;
+      color: var(--text-dark);
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 15px;
+      margin-bottom: 30px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 20px;
+    }
+
+    h2 {
+      font-size: 20px;
+      color: var(--text-dark);
+      margin-top: 35px;
+      margin-bottom: 16px;
+      font-weight: 700;
+      border-bottom: 2px solid var(--line);
+      padding-bottom: 8px;
+    }
+
+    h3 {
+      font-size: 16px;
+      color: var(--text-dark);
+      margin-top: 25px;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    ul,
+    ol {
+      padding-left: 20px;
+      margin-bottom: 20px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    strong {
+      color: var(--text-dark);
+    }
+
+    code {
+      font-family: Consolas, Monaco, "Andale Mono", monospace;
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      color: #0f172a;
+    }
+
+    /* Alerts */
+    .alert {
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin: 24px 0;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .alert-warning {
+      background: #fffbeb;
+      border: 1px solid #fef3c7;
+      color: #92400e;
+    }
+
+    .alert-info {
+      background: #eff6ff;
+      border: 1px solid #dbeafe;
+      color: #1e40af;
+    }
+
+    .alert-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    hr {
+      border: 0;
+      height: 1px;
+      background: var(--line);
+      margin: 30px 0;
+    }
+
+    .footer {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 40px;
+      border-top: 1px dashed var(--line);
+      padding-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Hướng dẫn sử dụng Module Phân quyền</h1>
+    <div class="subtitle">Tài liệu chi tiết hướng dẫn quản lý quyền truy cập thư mục và tài liệu hàng loạt trên LotusLMS
+    </div>
+
+    <h2>🌟 Các tính năng chính</h2>
+    <ol>
+      <li><strong>Đồng bộ tự động thông tin xác thực</strong>: Nạp trực tiếp <code>UID</code> và <code>Token</code> từ
+        extension, hoàn toàn không cần sao chép hay cấu hình thủ công.</li>
+      <li><strong>Hiển thị cây thư mục trực quan</strong>: Xem cấu trúc phân cấp các mục con (Thư mục, Tập tin, Ngân
+        hàng câu hỏi) với các biểu tượng tương ứng để dễ dàng bao quát dữ liệu.</li>
+      <li><strong>Phân quyền hàng loạt (Bulk Actions)</strong>: Thêm hoặc Xóa quyền của danh sách nhiều người dùng trên
+        nhiều thư mục/tập tin đã chọn cùng lúc.</li>
+      <li><strong>Quản lý quyền trực tiếp (Inline Actions)</strong>:
+        <ul>
+          <li>Thêm người dùng trực tiếp vào từng mục riêng lẻ bằng Mã người dùng (User Code) hoặc IID.</li>
+          <li>Thay đổi quyền chi tiết (Xem, Biên soạn, Biên tập, Bình luận, Duyệt) của từng người dùng bằng checkbox
+            trực quan.</li>
+          <li>Thu hồi quyền của một người dùng khỏi mục cụ thể chỉ với biểu tượng thùng rác màu đỏ.</li>
+        </ul>
+      </li>
+      <li><strong>Chế độ giả lập (Demo Offline)</strong>: Cho phép dùng thử giao diện và cấu trúc mẫu để thử nghiệm tính
+        năng mà không ảnh hưởng tới dữ liệu thật trên server.</li>
+    </ol>
+
+    <h2>🛠️ Hướng dẫn sử dụng chi tiết</h2>
+
+    <h3>Bước 1: Chuẩn bị thông tin xác thực</h3>
+    <ul>
+      <li>Hãy chắc chắn rằng bạn đã mở trang chủ LotusLMS (<code>aeglobal.lotuslms.com</code>) và đã đăng nhập tài
+        khoản.</li>
+      <li>Nhấn vào biểu tượng extension trên thanh công cụ để mở <strong>Popup</strong>.</li>
+      <li>Hệ thống sẽ tự động lấy thông tin xác thực. Khi hiển thị thông báo
+        <code>✅ Đã tự động cập nhật thông tin xác thực!</code>, bạn bấm vào nút <strong>Phân quyền hàng loạt</strong> để
+        mở module.</li>
+      <li>Các thông số <code>UID</code> và <code>Token</code> sẽ tự động được đồng bộ và hiển thị trong thẻ ở góc trên
+        bên trái của module.</li>
+    </ul>
+
+    <h3>Bước 2: Tải danh sách cây thư mục</h3>
+    <ul>
+      <li>Tại phần <strong>Cấu hình kết nối</strong> ở thanh bên trái:
+        <ul>
+          <li><strong>Folder cha</strong>: Nhập ID thư mục gốc bạn muốn quét (Ví dụ:
+            <code>684a38b2445a05ae9700eda5</code>).</li>
+          <li><strong>Quét thư mục con</strong>: Tích chọn nếu muốn quét đệ quy sâu xuống các thư mục con bên trong.
+          </li>
+          <li><strong>Hiện thư mục gốc</strong>: Tích chọn nếu muốn hiển thị và có khả năng thay đổi quyền cho chính thư
+            mục cha/gốc đó. Nếu bỏ chọn, hệ thống chỉ hiển thị các mục con.</li>
+          <li><strong>Độ sâu tối đa</strong>: Giới hạn số cấp thư mục con được quét đệ quy (mặc định là 10 cấp).</li>
+        </ul>
+      </li>
+      <li>Nhấn nút <strong>Tải danh sách mục con</strong>.</li>
+      <li>Hệ thống sẽ tải dữ liệu và hiển thị cây thư mục bên phải kèm theo danh sách người dùng đang có quyền trên từng
+        dòng.</li>
+    </ul>
+
+    <h3>Bước 3: Phân quyền hàng loạt (Bulk Permission)</h3>
+    <p>Sử dụng khi bạn cần thêm hoặc xóa quyền cho <strong>nhiều người dùng</strong> trên <strong>nhiều thư mục/tập
+        tin</strong> cùng lúc.</p>
+    <ul>
+      <li><strong>Chọn các thư mục/tập tin</strong>:
+        <ul>
+          <li>Tích chọn hộp kiểm bên cạnh các mục trong cây thư mục bên phải.</li>
+          <li>Bạn có thể tích chọn nút <strong>Chọn tất cả</strong> (thiết kế dạng viên thuốc màu xám ở phía trên cùng
+            bên trái của bảng) để chọn nhanh toàn bộ danh sách.</li>
+          <li>Khi chọn một thư mục cha, tất cả thư mục/tập tin con đã được tải của nó cũng sẽ tự động được chọn.</li>
+        </ul>
+      </li>
+      <li><strong>Cấu hình thông tin phân quyền</strong> (Tại phần <strong>Phân quyền hàng loạt</strong> ở thanh bên
+        trái):
+        <ul>
+          <li><strong>Mã người dùng (hoặc IID)</strong>: Nhập danh sách mã giảng viên/học viên hoặc IID (Ví dụ:
+            <code>HLS25100008, 18264204</code>). Các mã cách nhau bằng dấu phẩy hoặc xuống dòng.</li>
+          <li><strong>Chọn quyền</strong>: Tích chọn các quyền muốn cấp (Xem, Biên soạn, Biên tập, Bình luận, Duyệt).
+          </li>
+        </ul>
+      </li>
+      <li><strong>Thực hiện thao tác</strong>:
+        <ul>
+          <li>Nhấn <strong>Thêm quyền</strong> để tiến hành cấp quyền cho danh sách người dùng.</li>
+          <li>Nhấn <strong>Xóa quyền</strong> để thu hồi quyền của danh sách người dùng.</li>
+        </ul>
+      </li>
+      <li>Theo dõi tiến trình đồng bộ thông qua hộp thoại <strong>Nhật ký</strong> ở phía dưới bên trái.</li>
+    </ul>
+
+    <h3>Bước 4: Phân quyền trực tiếp (Inline Permission)</h3>
+    <p>Quản lý nhanh quyền của từng tệp tin/thư mục cụ thể trực tiếp trên bảng hiển thị:</p>
+    <ul>
+      <li><strong>Thay đổi nhanh vai trò</strong>: Tích/bỏ tích trực tiếp các ô tròn tương ứng với các quyền (Xem, Biên
+        soạn,...) dưới tên của người dùng. Hệ thống sẽ lập tức gửi yêu cầu cập nhật lên máy chủ.</li>
+      <li><strong>Xóa người dùng khỏi mục</strong>: Nhấn vào nút biểu tượng <strong>Thùng rác đỏ (🗑️)</strong> bên cạnh
+        tên người dùng và xác nhận xóa.</li>
+      <li><strong>Thêm người dùng nhanh</strong>:
+        <ol>
+          <li>Nhập Mã người dùng hoặc IID vào ô trống <code>Nhập code/IID...</code> ở cuối danh sách phân quyền của mục
+            đó.</li>
+          <li>Nhấn nút <strong>(+)</strong> hoặc ấn phím <strong>Enter</strong> trên bàn phím.</li>
+          <li>Hệ thống sẽ tự động tìm kiếm người dùng và thêm họ vào mục với các quyền mặc định (Xem & Biên soạn).</li>
+        </ol>
+      </li>
+    </ul>
+
+    <div class="alert alert-warning">
+      <div class="alert-title">⚠️ Lưu ý quan trọng về thừa kế quyền trên LotusLMS</div>
+      Khi bạn thay đổi quyền trên một thư mục cha, hệ thống máy chủ LotusLMS mặc định sẽ áp dụng đè quyền đó xuống các
+      mục con. Module này đã được lập trình để tự động tính toán, bảo toàn các quyền riêng biệt ban đầu của các mục con
+      trước khi đồng bộ, nhằm tránh việc vô tình làm mất quyền trực tiếp của người dùng ở cấp con.
+    </div>
+
+    <div class="alert alert-info">
+      <div class="alert-title">💡 Vấn đề hết hạn Token</div>
+      Token bảo mật của LotusLMS thường có hiệu lực trong vòng 24 giờ. Nếu gặp lỗi kết nối hoặc không tải được dữ liệu,
+      hãy quay lại trang LotusLMS, mở popup extension để tự động lấy token mới nhất, sau đó tải lại trang Phân quyền.
+    </div>
+
+    <div class="footer">
+      Dự án Aeglobal Tools — Giải pháp tự động hóa quản trị LMS
+    </div>
+  </div>
+</body>
+
+</html>

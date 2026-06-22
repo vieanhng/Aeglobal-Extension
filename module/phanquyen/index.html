@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Phân quyền hàng loạt - LotusLMS</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <main class="app-layout">
+    <aside class="sidebar-panel">
+      <header class="sidebar-header">
+        <p class="eyebrow">LotusLMS Content Manager</p>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 4px 0 8px;">
+          <h1 style="margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">Phân quyền hàng loạt</h1>
+          <a href="guide.html" target="_blank" class="help-link">Hướng dẫn</a>
+        </div>
+        <div class="status" id="status">Sẵn sàng</div>
+      </header>
+
+      <!-- Auth State Card -->
+      <div class="auth-card">
+        <div class="auth-header">
+          <div class="auth-status">
+            <span class="status-dot-wrapper">
+              <span class="status-dot-ping"></span>
+              <span class="status-dot"></span>
+            </span>
+            <span class="auth-status-text">Thông tin đồng bộ</span>
+          </div>
+          <span class="auth-date" id="displaySavedDate">...</span>
+        </div>
+        <div class="auth-body">
+          <div class="auth-row">
+            <span class="auth-key">UID:</span>
+            <span class="auth-val" id="displayUid">...</span>
+          </div>
+          <div class="auth-row">
+            <span class="auth-key">Token:</span>
+            <span class="auth-val" id="displayToken" title="Đồng bộ tự động từ Extension">...</span>
+          </div>
+        </div>
+        <p class="auth-footer">
+          💡 Hệ thống đồng bộ tự động. Bạn chỉ cần mở lại popup khi ở trang chủ LotusLMS nếu token hết hạn (sau 24h).
+        </p>
+      </div>
+
+      <section class="panel-section">
+        <h2>Cấu hình kết nối</h2>
+        <div class="vertical-grid">
+          <label>
+            Folder cha
+            <input id="parentId" autocomplete="off" placeholder="VD: 684a38b2445a05ae9700eda5">
+          </label>
+          <label class="checkbox-label"><input id="demoMode" type="checkbox"> Demo Offline (Giả lập)</label>
+          <label class="checkbox-label"><input id="recursiveScan" type="checkbox" checked> Quét thư mục con</label>
+          <label class="checkbox-label"><input id="showRootFolder" type="checkbox" checked> Hiện thư mục gốc</label>
+          <label class="number-label">
+            Độ sâu tối đa
+            <input id="maxDepth" type="number" min="1" max="20" value="10">
+          </label>
+        </div>
+        <button id="loadBtn" class="primary" style="margin-top: 10px;">Tải danh sách mục con</button>
+      </section>
+
+      <section class="panel-section">
+        <h2>Phân quyền hàng loạt</h2>
+        <div class="vertical-grid">
+          <label>
+            Mã người dùng (hoặc IID)
+            <textarea id="bulkUserCode"
+              placeholder="VD: HLS25100008, 18264204... (nhập cách nhau bằng dấu phẩy hoặc xuống dòng)" rows="2"
+              style="font-family: inherit;"></textarea>
+          </label>
+
+          <div class="roles-grid" aria-label="Chon quyen hang loat">
+            <label><input type="checkbox" name="bulkRoles" value="viewer" checked> Xem</label>
+            <label><input type="checkbox" name="bulkRoles" value="copy_editor" checked> Biên Soạn</label>
+            <label><input type="checkbox" name="bulkRoles" value="editor"> Biên tập</label>
+            <label><input type="checkbox" name="bulkRoles" value="commenter"> Bình Luận</label>
+            <label><input type="checkbox" name="bulkRoles" value="approver"> Duyệt</label>
+          </div>
+
+          <div class="btn-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+            <button id="bulkAddBtn" class="success-btn" disabled>Thêm quyền</button>
+            <button id="bulkRemoveBtn" class="danger-btn" disabled>Xóa quyền</button>
+          </div>
+        </div>
+      </section>
+
+      <details class="advanced-details">
+        <summary>Cài đặt nâng cao</summary>
+        <div class="vertical-grid advanced-grid">
+          <label>
+            API base
+            <input id="apiBase" value="https://cloud-beta-api.lotuslms.com">
+          </label>
+          <label>
+            Domain
+            <input id="domain" value="aeglobal">
+          </label>
+          <label>
+            Organization iid
+            <input id="orgIid" value="13009440">
+          </label>
+          <label>
+            _sand_uid
+            <input id="sandUid" placeholder="Nếu API yêu cầu">
+          </label>
+          <label>
+            Session id
+            <input id="sessionId" value="5eadbef1-55b8-498e-8e43-f0078552d176">
+          </label>
+          <label>
+            Items/page
+            <input id="itemsPerPage" type="number" min="1" max="500" value="100">
+          </label>
+        </div>
+      </details>
+
+      <section class="panel-section log-section">
+        <h2>Nhật ký</h2>
+        <pre id="log" class="log"></pre>
+      </section>
+    </aside>
+
+    <section class="main-content">
+      <div class="tableHead">
+        <h2>Cây thư mục & Item con</h2>
+        <div class="tableTools">
+          <label class="inline-checkbox"><input id="checkAll" type="checkbox"> Chọn tất cả</label>
+          <button id="expandAllBtn" type="button">Mở tất cả</button>
+          <button id="collapseAllBtn" type="button">Thu tất cả</button>
+        </div>
+      </div>
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Tên thư mục / File</th>
+              <th>Đường dẫn</th>
+              <th>Loại</th>
+              <th>User đang có quyền & Phân quyền inline</th>
+            </tr>
+          </thead>
+          <tbody id="itemsBody">
+            <tr>
+              <td colspan="5" class="empty">Chưa tải dữ liệu</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="/module/shared-auth.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>

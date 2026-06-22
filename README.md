@@ -17,6 +17,7 @@ Extension hỗ trợ tự động hoá cho hệ thống **Aeglobal LotusLMS**, g
 | 🏷️ Badge IID trên folder | Tự hiển thị IID ngân hàng ở góc trên trang Content Manager folder khi folder trỏ tới `question_bank` |
 | ⬇️ Xuất câu hỏi từ folder | Xuất danh sách câu hỏi từ folder |
 | ⬇️ Xuất câu hỏi từ syllabus | Xuất danh sách câu hỏi từ syllabus |
+| 🔀 Phân quyền | Quản lý quyền truy cập của user trên thư mục và các tài liệu |
 
 ---
 
