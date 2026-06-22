@@ -373,8 +373,8 @@ async function loadData() {
 
       // 2. Fetch children/descendants starting from level 2
       log("Đang tải danh sách mục con...");
-      items = config.recursiveScan 
-        ? await searchContentTree(config, rootFolder._path, 2) 
+      items = config.recursiveScan
+        ? await searchContentTree(config, rootFolder._path, 2)
         : await searchContent(config, config.parentId, rootFolder._path, 2);
 
       allItems = [rootFolder, ...items];
@@ -382,8 +382,8 @@ async function loadData() {
     } else {
       // Traditional way: no root folder shown, children start at level 1, path is empty
       log("Đang tải danh sách mục con...");
-      items = config.recursiveScan 
-        ? await searchContentTree(config, "", 1) 
+      items = config.recursiveScan
+        ? await searchContentTree(config, "", 1)
         : await searchContent(config, config.parentId, "", 1);
 
       allItems = items;
@@ -396,7 +396,7 @@ async function loadData() {
 
     state.items = allItems;
     state.selectedIds.clear();
-    
+
     // Auto-expand folders by default
     if (config.showRootFolder && allItems.length > 0) {
       state.expandedIds = new Set([allItems[0].id, ...items.filter(isFolder).map((item) => item.id)]);
@@ -991,18 +991,18 @@ function renderItems(items) {
             <div class="inline-add-user">
               <div class="inline-add-input-row">
                 <input type="text" placeholder="Nhập code/IID..." class="inline-add-input" data-item-id="${escapeHtml(item.id)}">
-                <button type="button" class="inline-add-btn" data-item-id="${escapeHtml(item.id)}">Cập nhật</button>
+                <button type="button" class="inline-add-btn" data-item-id="${escapeHtml(item.id)}">Thêm</button>
               </div>
               <div class="inline-roles-container inline-add-roles" data-item-id="${escapeHtml(item.id)}">
                 ${ALL_ROLES.map(role => {
-                  const isChecked = ["viewer", "copy_editor"].includes(role.value);
-                  return `
+      const isChecked = ["viewer", "copy_editor"].includes(role.value);
+      return `
                     <label class="inline-role">
                       <input type="checkbox" data-role="${role.value}" ${isChecked ? "checked" : ""}>
                       ${role.label}
                     </label>
                   `;
-                }).join("")}
+    }).join("")}
               </div>
             </div>
           </div>
@@ -1328,7 +1328,7 @@ async function handleInlineRoleChange(itemId, userIid, buttonElement) {
         const descSharing = updates.has(desc.id)
           ? cloneSharing(updates.get(desc.id))
           : cloneSharing(desc.sharing);
-        
+
         let originalRoles = [];
         const existingDescEntry = desc.sharing?.specific_sharing?.find(
           e => e.target === "user" && e.user_iids?.map(Number).includes(userIid)
