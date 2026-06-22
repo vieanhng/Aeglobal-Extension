@@ -582,6 +582,34 @@ thead th {
   background: #fee2e2;
 }
 
+.sharedUserActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.primary-mini-btn {
+  background: var(--primary);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: 4px;
+  height: 20px;
+  line-height: 1;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s;
+}
+
+.primary-mini-btn:hover {
+  background: var(--primary-hover);
+}
+
 .inline-roles-container {
   display: flex;
   flex-wrap: wrap;
@@ -607,12 +635,20 @@ thead th {
 
 .inline-add-user {
   display: flex;
+  flex-direction: column;
   gap: 6px;
   margin-top: 8px;
-  align-items: center;
+  align-items: flex-start;
+}
+
+.inline-add-input-row {
+  display: flex;
+  gap: 6px;
+  width: 100%;
 }
 
 .inline-add-input {
+  flex: 1;
   padding: 4px 8px;
   font-size: 12px;
   border-radius: 4px;

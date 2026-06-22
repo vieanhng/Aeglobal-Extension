@@ -9,6 +9,15 @@ const state = {
   sandUiid: ""
 };
 
+const ALL_ROLES = [
+  { value: "viewer", label: "Xem" },
+  { value: "copy_editor", label: "Biên Soạn" },
+  { value: "editor", label: "Biên tập" },
+  { value: "commenter", label: "Bình Luận" },
+  { value: "approver", label: "Duyệt" }
+];
+
+
 const MOCK_ITEMS = [
   {
     id: "6850f2b3028ecf95300d5146",
@@ -213,7 +222,10 @@ fields.itemsBody.addEventListener("click", (event) => {
     const itemId = addBtn.dataset.itemId;
     const input = fields.itemsBody.querySelector(`.inline-add-input[data-item-id="${itemId}"]`);
     if (input) {
-      handleInlineAddUser(itemId, input.value.trim(), input);
+      const rolesContainer = fields.itemsBody.querySelector(`.inline-add-roles[data-item-id="${itemId}"]`);
+      const checkedCheckboxes = Array.from(rolesContainer.querySelectorAll("input[data-role]:checked"));
+      const selectedRoles = checkedCheckboxes.map(cb => cb.dataset.role);
+      handleInlineAddUser(itemId, input.value.trim(), input, selectedRoles);
     }
     return;
   }
@@ -227,16 +239,13 @@ fields.itemsBody.addEventListener("click", (event) => {
     }
     return;
   }
-});
 
-fields.itemsBody.addEventListener("change", (event) => {
-  const roleCheckbox = event.target.closest("[data-role]");
-  if (roleCheckbox) {
-    const itemId = roleCheckbox.dataset.itemId;
-    const userIid = Number(roleCheckbox.dataset.userIid);
-    const roleValue = roleCheckbox.dataset.role;
-    const isChecked = roleCheckbox.checked;
-    handleInlineRoleChange(itemId, userIid, roleValue, isChecked, roleCheckbox);
+  const updateBtn = event.target.closest(".inline-update-btn");
+  if (updateBtn) {
+    const itemId = updateBtn.dataset.itemId;
+    const userIid = Number(updateBtn.dataset.userIid);
+    handleInlineRoleChange(itemId, userIid, updateBtn);
+    return;
   }
 });
 
@@ -246,7 +255,10 @@ fields.itemsBody.addEventListener("keydown", (event) => {
     if (input) {
       event.preventDefault();
       const itemId = input.dataset.itemId;
-      handleInlineAddUser(itemId, input.value.trim(), input);
+      const rolesContainer = fields.itemsBody.querySelector(`.inline-add-roles[data-item-id="${itemId}"]`);
+      const checkedCheckboxes = Array.from(rolesContainer.querySelectorAll("input[data-role]:checked"));
+      const selectedRoles = checkedCheckboxes.map(cb => cb.dataset.role);
+      handleInlineAddUser(itemId, input.value.trim(), input, selectedRoles);
     }
   }
 });
@@ -977,8 +989,21 @@ function renderItems(items) {
           <div class="inline-users-wrapper">
             ${users.length ? users.map((u) => renderSharedUser(u, item.id)).join("") : "<span class='empty'>Chưa có user_iids</span>"}
             <div class="inline-add-user">
-              <input type="text" placeholder="Nhập code/IID..." class="inline-add-input" data-item-id="${escapeHtml(item.id)}">
-              <button type="button" class="inline-add-btn" data-item-id="${escapeHtml(item.id)}">+</button>
+              <div class="inline-add-input-row">
+                <input type="text" placeholder="Nhập code/IID..." class="inline-add-input" data-item-id="${escapeHtml(item.id)}">
+                <button type="button" class="inline-add-btn" data-item-id="${escapeHtml(item.id)}">Cập nhật</button>
+              </div>
+              <div class="inline-roles-container inline-add-roles" data-item-id="${escapeHtml(item.id)}">
+                ${ALL_ROLES.map(role => {
+                  const isChecked = ["viewer", "copy_editor"].includes(role.value);
+                  return `
+                    <label class="inline-role">
+                      <input type="checkbox" data-role="${role.value}" ${isChecked ? "checked" : ""}>
+                      ${role.label}
+                    </label>
+                  `;
+                }).join("")}
+              </div>
             </div>
           </div>
         </td>
@@ -1197,15 +1222,7 @@ function renderSharedUser(entry, itemId) {
     ? `${user.code || user.mail || ""}${user.code && user.mail ? " | " : ""}${user.mail || ""}`
     : "Chưa resolve được thông tin user";
 
-  const allRoles = [
-    { value: "viewer", label: "Xem" },
-    { value: "copy_editor", label: "Biên Soạn" },
-    { value: "editor", label: "Biên tập" },
-    { value: "commenter", label: "Bình Luận" },
-    { value: "approver", label: "Duyệt" }
-  ];
-
-  const rolesHtml = allRoles.map(role => {
+  const rolesHtml = ALL_ROLES.map(role => {
     const isChecked = entry.roles.includes(role.value);
     return `
       <label class="inline-role">
@@ -1222,12 +1239,15 @@ function renderSharedUser(entry, itemId) {
           <strong>${escapeHtml(title)}</strong>
           <small>iid: ${escapeHtml(entry.iid)} ${detail ? `| ${escapeHtml(detail)}` : ""}</small>
         </div>
-        <button type="button" class="inline-remove-user" data-user-iid="${entry.iid}" data-item-id="${itemId}" title="Xóa user khỏi item">
-          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          </svg>
-        </button>
+        <div class="sharedUserActions">
+          <button type="button" class="inline-update-btn primary-mini-btn" data-user-iid="${entry.iid}" data-item-id="${itemId}" title="Cập nhật quyền">Cập nhật</button>
+          <button type="button" class="inline-remove-user" data-user-iid="${entry.iid}" data-item-id="${itemId}" title="Xóa user khỏi item">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>
       </div>
       <div class="inline-roles-container">
         ${rolesHtml}
@@ -1279,9 +1299,15 @@ function changeUserRolesInSharing(sharing, userIid, nextRoles) {
   return sharing;
 }
 
-async function handleInlineRoleChange(itemId, userIid, roleValue, isChecked, checkboxElement) {
+async function handleInlineRoleChange(itemId, userIid, buttonElement) {
   const item = state.items.find(i => i.id === itemId);
   if (!item) return;
+
+  const container = buttonElement.closest(".sharedUser");
+  if (!container) return;
+
+  const checkedCheckboxes = Array.from(container.querySelectorAll("input[data-role]:checked"));
+  const nextRoles = checkedCheckboxes.map(cb => cb.dataset.role);
 
   const config = getConfig();
   try {
@@ -1292,18 +1318,6 @@ async function handleInlineRoleChange(itemId, userIid, roleValue, isChecked, che
 
     // 1. Calculate parent sharing
     const sharing = cloneSharing(item.sharing);
-    let currentRoles = [];
-    const existingEntry = sharing.specific_sharing.find(e => e.target === "user" && e.user_iids?.map(Number).includes(userIid));
-    if (existingEntry) {
-      currentRoles = [...existingEntry.roles];
-    }
-    const rolesSet = new Set(currentRoles);
-    if (isChecked) {
-      rolesSet.add(roleValue);
-    } else {
-      rolesSet.delete(roleValue);
-    }
-    const nextRoles = Array.from(rolesSet);
     changeUserRolesInSharing(sharing, userIid, nextRoles);
     updates.set(item.id, sharing);
 
@@ -1311,7 +1325,10 @@ async function handleInlineRoleChange(itemId, userIid, roleValue, isChecked, che
     if (isFolder(item)) {
       const descendants = getLoadedDescendants(item.id);
       for (const desc of descendants) {
-        const descSharing = cloneSharing(desc.sharing);
+        const descSharing = updates.has(desc.id)
+          ? cloneSharing(updates.get(desc.id))
+          : cloneSharing(desc.sharing);
+        
         let originalRoles = [];
         const existingDescEntry = desc.sharing?.specific_sharing?.find(
           e => e.target === "user" && e.user_iids?.map(Number).includes(userIid)
@@ -1320,14 +1337,9 @@ async function handleInlineRoleChange(itemId, userIid, roleValue, isChecked, che
           originalRoles = existingDescEntry.roles || [];
         }
 
-        if (isChecked) {
-          // Additive: Union of originalRoles and nextRoles
-          const mergedRoles = Array.from(new Set([...originalRoles, ...nextRoles]));
-          changeUserRolesInSharing(descSharing, userIid, mergedRoles);
-        } else {
-          // For unchecking, keep originalRoles to prevent downgrading children
-          changeUserRolesInSharing(descSharing, userIid, originalRoles);
-        }
+        // Additive: Union of originalRoles and nextRoles
+        const mergedRoles = Array.from(new Set([...originalRoles, ...nextRoles]));
+        changeUserRolesInSharing(descSharing, userIid, mergedRoles);
         updates.set(desc.id, descSharing);
       }
     }
@@ -1345,7 +1357,6 @@ async function handleInlineRoleChange(itemId, userIid, roleValue, isChecked, che
     renderItems(state.items);
   } catch (error) {
     showError(error);
-    checkboxElement.checked = !isChecked; // revert state
   } finally {
     setBusy(false);
   }
@@ -1403,7 +1414,7 @@ async function handleInlineRemoveUser(itemId, userIid) {
   }
 }
 
-async function handleInlineAddUser(itemId, query, inputElement) {
+async function handleInlineAddUser(itemId, query, inputElement, selectedRoles) {
   if (!query) return;
   const item = state.items.find(i => i.id === itemId);
   if (!item) return;
@@ -1411,6 +1422,9 @@ async function handleInlineAddUser(itemId, query, inputElement) {
   const config = getConfig();
   try {
     assertConfig(config, { requireCodes: false });
+    if (!selectedRoles || selectedRoles.length === 0) {
+      throw new Error("Vui lòng chọn ít nhất 1 quyền cho người dùng mới.");
+    }
     setBusy(true, "Đang tìm user...");
 
     let user = null;
@@ -1455,7 +1469,7 @@ async function handleInlineAddUser(itemId, query, inputElement) {
     state.sharedUsers.set(String(userIid), user);
 
     const updates = new Map();
-    const defaultRoles = ["viewer", "copy_editor"]; // default roles for added users
+    const defaultRoles = selectedRoles; // roles for added user
 
     // 1. Parent sharing
     const sharing = cloneSharing(item.sharing);
