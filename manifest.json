@@ -30,9 +30,6 @@
             "js": [
                 "content_script.js"
             ],
-            "css": [
-                "lib/tailwind.min.css"
-            ],
             "run_at": "document_start"
         }
     ],
