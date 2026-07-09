@@ -38,6 +38,47 @@ const duplicateQuestion = async (questionId, uid, token) => {
 };
 
 /**
+ * Xóa câu hỏi theo ID - Gọi API /question/delete
+ */
+const deleteQuestion = async (questionId, uid, token) => {
+    console.log(`Đang xóa câu hỏi ID: ${questionId}`);
+    try {
+        const formData = new FormData();
+        formData.append('id', questionId);
+        formData.append('submit', '1');
+        formData.append('_sand_ajax', '1');
+        formData.append('_sand_platform', '3');
+        formData.append('_sand_readmin', '1');
+        formData.append('_sand_is_wan', 'false');
+        formData.append('_sand_domain', DOMAIN);
+        formData.append('_sand_masked', '');
+        formData.append('allow_cache_api_cdn', '1');
+        formData.append('lang', 'vn');
+        formData.append('_sand_token', token);
+        formData.append('_sand_uiid', uid);
+
+        const response = await fetch(`${API_BASE}/question/delete`, {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log(`Xóa thành công câu hỏi ID: ${questionId}`);
+            return { success: true };
+        } else {
+            const errMsg = data.message || 'Xóa thất bại';
+            console.error(`Xóa thất bại câu hỏi ${questionId}: ${errMsg}`);
+            return { success: false, error: errMsg };
+        }
+    } catch (error) {
+        console.error(`Lỗi khi xóa câu hỏi ${questionId}:`, error);
+        return { success: false, error: error.message };
+    }
+};
+
+/**
  * Di chuyển câu hỏi vào ngân hàng - Gọi trực tiếp LotusLMS API
  */
 const moveQuestionsToBank = async (questionIdsToMove, bankId, uid, token) => {
@@ -500,6 +541,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         })();
 
         return true; // Keep message channel open for async response
+    }
+    // ============================================================
+    // Xóa câu hỏi theo ID
+    // ============================================================
+    if (request.action === 'deleteQuestion') {
+        const { uid, token, questionId } = request;
+
+        (async () => {
+            try {
+                const result = await deleteQuestion(questionId, uid, token);
+                sendResponse(result);
+            } catch (error) {
+                console.error(`Lỗi deleteQuestion ${questionId}:`, error);
+                sendResponse({ success: false, error: error.message });
+            }
+        })();
+
+        return true; // Giữ channel mở cho async
     }
     // ============================================================
     // Content Script: Resolve IID ngân hàng từ shortcode trong URL

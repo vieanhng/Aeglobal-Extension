@@ -268,6 +268,11 @@ document.addEventListener('DOMContentLoaded', () => {
         window.open(chrome.runtime.getURL('module/question-move/index.html'));
     });
 
+    const openQuestionDeleter = document.getElementById('openQuestionDeleter');
+    openQuestionDeleter.addEventListener('click', () => {
+        window.open(chrome.runtime.getURL('module/question-deleter/index.html'));
+    });
+
     const openPhanQuyen = document.getElementById('openPhanQuyen');
     openPhanQuyen.addEventListener('click', () => {
         window.open(chrome.runtime.getURL('module/phanquyen/index.html'));

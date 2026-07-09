@@ -7,7 +7,7 @@
 **Loại:** Chrome Extension (Manifest V3)  
 **Mục đích:** Công cụ tự động hóa cho hệ thống quản lý học tập (LMS) tại `aeglobal.lotuslms.com` và `aeglobal2.lotuslms.com`.
 
-Extension cung cấp 5 module chức năng chính để quản lý **Ngân hàng câu hỏi (Question Bank)** trên nền tảng LotusLMS, bao gồm: nhân bản, di chuyển, tìm kiếm, xuất câu hỏi hàng loạt và tra cứu IID ngân hàng thông qua API nội bộ của LotusLMS.
+Extension cung cấp các module chức năng để quản lý **Ngân hàng câu hỏi (Question Bank)** trên nền tảng LotusLMS, bao gồm: nhân bản, di chuyển, tìm kiếm, xuất câu hỏi hàng loạt, xóa câu hỏi hàng loạt và tra cứu IID ngân hàng thông qua API nội bộ của LotusLMS.
 
 ---
 
@@ -41,6 +41,9 @@ Aeglobal Extension/
     ├── question-move/
     │   ├── index.html         # Giao diện di chuyển câu hỏi
     │   └── script.js          # Logic di chuyển
+    ├── question-deleter/
+    │   ├── index.html         # Giao diện xóa câu hỏi hàng loạt
+    │   └── script.js          # Logic xóa (batch, progress, live log)
     └── bank-iid-viewer/
         ├── index.html         # Giao diện xem IID ngân hàng
         └── script.js          # Logic tra cứu IID
@@ -82,12 +85,14 @@ Aeglobal Extension/
 | `moveQuestions` | Di chuyển câu hỏi sang ngân hàng khác |
 | `findQuestion` | Tìm ngân hàng chứa câu hỏi theo ID |
 | `exportQuestions` | Xuất tất cả ID câu hỏi từ một ngân hàng |
+| `deleteQuestion` | Xóa câu hỏi theo ID (gọi `dev-steve-api`) |
 
 ---
 
 ## API Endpoints
 
 **Base URL:** `https://cloud-beta-api.lotuslms.com`  
+**Base URL (Delete):** `https://dev-steve-api.lotuslms.com`  
 **Domain param:** `_sand_domain=aeglobal`
 
 | Endpoint | Phương thức | Chức năng |
@@ -98,6 +103,7 @@ Aeglobal Extension/
 | `/question-bank/editor/fetch-node` | POST (GET params) | Lấy thông tin ngân hàng theo IID |
 | `/exercise/editor/update-question` | POST (FormData) | Cập nhật tags cho câu hỏi |
 | `/content/api/item-detail` | POST (GET params) | Resolve shortcode sang IID thực |
+| `/question/delete` *(dev-steve-api)* | POST (FormData) | Xóa câu hỏi theo ID |
 
 **Auth params (bắt buộc trên mọi request):**
 - `_sand_token` — Bearer token của người dùng
