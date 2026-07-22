@@ -102,12 +102,28 @@ document.addEventListener('DOMContentLoaded', () => {
             .trim();
     }
 
-    // Helper: Clean base64 image sources inside text to avoid cell limit issues in Excel
-    function cleanExcelCell(val) {
+    // Helper: Clean base64 image sources inside text to avoid cell limit issues in Excel and log/truncate oversized strings
+    function cleanExcelCell(val, fieldName = '', qId = '') {
         if (val === null || val === undefined) return '';
         let str = String(val);
         // Replace base64 data URLs with a truncated version
-        str = str.replace(/data:image\/[^;]+;base64,[a-zA-Z0-9+/=]+/g, 'data:image/...;base64,[BASE64_IMAGE_TRUNCATED]');
+        str = str.replace(/data:image\/[^;]+;base64,[^"'\s>]+/g, 'data:image/...;base64,[BASE64_IMAGE_TRUNCATED]');
+
+        // Excel hard cell character limit is 32,767
+        const MAX_LEN = 32500;
+        if (str.length > 32767) {
+            const itemIdentifier = qId ? `câu hỏi ID ${qId}` : 'câu hỏi';
+            const fieldIdentifier = fieldName ? ` ở cột "${fieldName}"` : '';
+            const warningMsg = `⚠️ Cảnh báo Excel: ${itemIdentifier}${fieldIdentifier} có độ dài ${str.length.toLocaleString()} ký tự, vượt quá giới hạn 32,767 ký tự của Excel! Đã tự động cắt bớt để xuất tệp thành công.`;
+
+            console.warn(warningMsg);
+            if (typeof addLog === 'function') {
+                addLog(warningMsg, 'warning');
+            }
+
+            str = str.substring(0, MAX_LEN) + `\n... [NỘI DUNG ĐÃ CẮT BỚT DO VƯỢT QUÁ GIỚI HẠN 32,767 KÝ TỰ CỦA EXCEL (ĐỘ DÀI GỐC: ${str.length.toLocaleString()} KÝ TỰ)]`;
+        }
+
         return str;
     }
 
@@ -740,27 +756,29 @@ document.addEventListener('DOMContentLoaded', () => {
             const hintHtml = (q.hints && q.hints[0] && q.hints[0].name) || '';
             const solHtml = (q.solutions && q.solutions[0] && q.solutions[0].name) || '';
 
+            const qId = q.id || q.iid || `STT ${idx + 1}`;
+
             return {
                 "STT": idx + 1,
-                "Syllabus IID": cleanExcelCell(q._source_syllabus_iid),
-                "Syllabus Name": cleanExcelCell(q._source_syllabus_name),
-                "ID câu hỏi": cleanExcelCell(q.id || q.iid),
-                "Loại câu hỏi": cleanExcelCell(getQuestionTypeName(q.type, q.tpl_type)),
-                "Độ khó": cleanExcelCell(q.difficulty),
-                "Trạng thái": cleanExcelCell(getStatusDescription(q.content_edit_status)),
-                "Kỹ năng": cleanExcelCell(skillsText),
-                "Động từ": cleanExcelCell(competencyText),
-                "Exercise IID": cleanExcelCell(q._source_exercise_iid),
-                "Exercise Name": cleanExcelCell(q._source_exercise_name),
-                "Nội dung (Không HTML)": cleanExcelCell(htmlToPlainText(q.content)),
-                "Nội dung (HTML)": cleanExcelCell(q.content),
-                "Các lựa chọn": cleanExcelCell(optionsText),
-                "Đáp án đúng (Định dạng)": cleanExcelCell(correctAnswers),
-                "Giải thích (Không HTML)": cleanExcelCell(htmlToPlainText(solHtml)),
-                "Giải thích (HTML)": cleanExcelCell(solHtml),
-                "Gợi ý (Không HTML)": cleanExcelCell(htmlToPlainText(hintHtml)),
-                "Gợi ý (HTML)": cleanExcelCell(hintHtml),
-                "Đáp án (JSON thô)": cleanExcelCell(getAnswers(q))
+                "Syllabus IID": cleanExcelCell(q._source_syllabus_iid, "Syllabus IID", qId),
+                "Syllabus Name": cleanExcelCell(q._source_syllabus_name, "Syllabus Name", qId),
+                "ID câu hỏi": cleanExcelCell(q.id || q.iid, "ID câu hỏi", qId),
+                "Loại câu hỏi": cleanExcelCell(getQuestionTypeName(q.type, q.tpl_type), "Loại câu hỏi", qId),
+                "Độ khó": cleanExcelCell(q.difficulty, "Độ khó", qId),
+                "Trạng thái": cleanExcelCell(getStatusDescription(q.content_edit_status), "Trạng thái", qId),
+                "Kỹ năng": cleanExcelCell(skillsText, "Kỹ năng", qId),
+                "Động từ": cleanExcelCell(competencyText, "Động từ", qId),
+                "Exercise IID": cleanExcelCell(q._source_exercise_iid, "Exercise IID", qId),
+                "Exercise Name": cleanExcelCell(q._source_exercise_name, "Exercise Name", qId),
+                "Nội dung (Không HTML)": cleanExcelCell(htmlToPlainText(q.content), "Nội dung (Không HTML)", qId),
+                "Nội dung (HTML)": cleanExcelCell(q.content, "Nội dung (HTML)", qId),
+                "Các lựa chọn": cleanExcelCell(optionsText, "Các lựa chọn", qId),
+                "Đáp án đúng (Định dạng)": cleanExcelCell(correctAnswers, "Đáp án đúng (Định dạng)", qId),
+                "Giải thích (Không HTML)": cleanExcelCell(htmlToPlainText(solHtml), "Giải thích (Không HTML)", qId),
+                "Giải thích (HTML)": cleanExcelCell(solHtml, "Giải thích (HTML)", qId),
+                "Gợi ý (Không HTML)": cleanExcelCell(htmlToPlainText(hintHtml), "Gợi ý (Không HTML)", qId),
+                "Gợi ý (HTML)": cleanExcelCell(hintHtml, "Gợi ý (HTML)", qId),
+                "Đáp án (JSON thô)": cleanExcelCell(getAnswers(q), "Đáp án (JSON thô)", qId)
             };
         });
 

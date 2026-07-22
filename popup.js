@@ -252,6 +252,13 @@ document.addEventListener('DOMContentLoaded', () => {
         window.open(chrome.runtime.getURL('module/question-folder-extractor/index.html'));
     });
 
+    const openFolderStructureExporterBtn = document.getElementById('openFolderStructureExporter');
+    if (openFolderStructureExporterBtn) {
+        openFolderStructureExporterBtn.addEventListener('click', () => {
+            window.open(chrome.runtime.getURL('module/folder-structure-exporter/index.html'));
+        });
+    }
+
     const openSyllabusExtractorBtn = document.getElementById('openSyllabusExtractor');
     openSyllabusExtractorBtn.addEventListener('click', () => {
         window.open(chrome.runtime.getURL('module/question-syllabus-extractor/index.html'));
