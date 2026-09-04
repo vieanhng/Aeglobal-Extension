@@ -128,9 +128,12 @@ const findQuestion = async (questionId, uid, token) => {
         const searchData = await searchResponse.json();
 
         if (searchData.success && searchData.result && searchData.result.length > 0) {
+            const qIdLower = String(questionId).toLowerCase().trim();
             const questionData = searchData.result.find(q =>
-                String(q.id) === String(questionId) || String(q.iid) === String(questionId)
-            );
+                (q.id && String(q.id).toLowerCase() === qIdLower) ||
+                (q.iid && String(q.iid).toLowerCase() === qIdLower) ||
+                (q._id && String(q._id).toLowerCase() === qIdLower)
+            ) || (searchData.result.length === 1 ? searchData.result[0] : null);
 
             if (questionData) {
                 let bankName = "N/A";
@@ -209,6 +212,32 @@ const updateQuestionTags = async (questionObject, tags, mode = 'append', uid, to
 
             // Loại bỏ các tags cần xóa
             finalTags = currentTags.filter(t => !tagsToRemoveSet.has(t.toLowerCase()));
+        } else if (mode === 'overwrite') {
+            // Ghi đè thẻ A bằng thẻ B, giữ nguyên các thẻ khác của câu hỏi
+            let fromTags = [];
+            let toTags = [];
+            if (tags && typeof tags === 'object' && !Array.isArray(tags)) {
+                fromTags = (Array.isArray(tags.from) ? tags.from : [tags.from || '']).map(t => String(t).trim()).filter(t => t.length > 0);
+                toTags = (Array.isArray(tags.to) ? tags.to : [tags.to || '']).map(t => String(t).trim()).filter(t => t.length > 0);
+            }
+
+            const fromSet = new Set(fromTags.map(t => t.toLowerCase()));
+            const matchedTags = currentTags.filter(t => fromSet.has(t.toLowerCase()));
+
+            if (matchedTags.length === 0) {
+                console.log(`ID ${qId} không chứa thẻ [${fromTags.join(', ')}] để ghi đè. Bỏ qua.`);
+                return {
+                    success: true,
+                    skipped: true,
+                    message: `Không chứa thẻ [${fromTags.join(', ')}] để ghi đè`,
+                    oldTags: currentTags,
+                    finalTags: currentTags
+                };
+            }
+
+            // Giữ nguyên các thẻ khác, thay thế các thẻ A bằng thẻ B
+            const remainingTags = currentTags.filter(t => !fromSet.has(t.toLowerCase()));
+            finalTags = [...new Set([...remainingTags, ...toTags])];
         } else {
             finalTags = [...new Set([...currentTags, ...inputTags])];
         }
@@ -670,6 +699,29 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             } catch (error) {
                 console.error(`Lỗi deleteQuestion ${questionId}:`, error);
                 sendResponse({ success: false, error: error.message });
+            }
+        })();
+
+        return true; // Giữ channel mở cho async
+    }
+    // ============================================================
+    // Quản lý thẻ câu hỏi: Append, Remove, Replace, Overwrite
+    // ============================================================
+    if (request.action === 'updateQuestionTags') {
+        const { uid, token, questionId, tags, mode } = request;
+
+        (async () => {
+            try {
+                let qObj = await findQuestion(questionId, uid, token);
+                if (!qObj) {
+                    sendResponse({ success: false, questionId, error: "Không tìm thấy câu hỏi" });
+                    return;
+                }
+                const result = await updateQuestionTags(qObj, tags, mode || 'append', uid, token);
+                sendResponse({ ...result, questionId });
+            } catch (error) {
+                console.error(`Lỗi updateQuestionTags cho ID ${questionId}:`, error);
+                sendResponse({ success: false, questionId, error: error.message });
             }
         })();
 

@@ -20,10 +20,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const batchSizeInput     = document.getElementById('batchSize');
     const delayMsInput       = document.getElementById('delayMs');
 
+    // Input Containers for Overwrite Mode
+    const standardTagInputContainer  = document.getElementById('standardTagInputContainer');
+    const overwriteTagInputContainer = document.getElementById('overwriteTagInputContainer');
+    const tagInputFrom               = document.getElementById('tagInputFrom');
+    const tagInputTo                 = document.getElementById('tagInputTo');
+
     // Mode Radios & Cards
     const modeRadios         = document.querySelectorAll('input[name="tagMode"]');
     const modeCardAppend     = document.getElementById('modeCardAppend');
     const modeCardRemove     = document.getElementById('modeCardRemove');
+    const modeCardOverwrite  = document.getElementById('modeCardOverwrite');
     const modeCardReplace    = document.getElementById('modeCardReplace');
 
     // Buttons
@@ -77,12 +84,16 @@ document.addEventListener('DOMContentLoaded', () => {
         chrome.storage.local.get([
             'taggerQuestionIds',
             'taggerTagsInput',
+            'taggerTagFrom',
+            'taggerTagTo',
             'taggerMode',
             'taggerBatchSize',
             'taggerDelayMs'
         ], (data) => {
             if (data.taggerQuestionIds) questionIdsInput.value = data.taggerQuestionIds;
             if (data.taggerTagsInput)   tagInput.value = data.taggerTagsInput;
+            if (data.taggerTagFrom && tagInputFrom) tagInputFrom.value = data.taggerTagFrom;
+            if (data.taggerTagTo && tagInputTo)     tagInputTo.value = data.taggerTagTo;
             if (data.taggerBatchSize)   batchSizeInput.value = data.taggerBatchSize;
             if (data.taggerDelayMs)     delayMsInput.value = data.taggerDelayMs;
 
@@ -163,6 +174,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 finalTags = currentTags.filter(t => !tagsToRemoveSet.has(t.toLowerCase()));
+            } else if (mode === 'overwrite') {
+                let fromTags = [];
+                let toTags = [];
+                if (tags && typeof tags === 'object' && !Array.isArray(tags)) {
+                    fromTags = (Array.isArray(tags.from) ? tags.from : [tags.from || '']).map(t => String(t).trim()).filter(t => t.length > 0);
+                    toTags = (Array.isArray(tags.to) ? tags.to : [tags.to || '']).map(t => String(t).trim()).filter(t => t.length > 0);
+                }
+
+                const fromSet = new Set(fromTags.map(t => t.toLowerCase()));
+                const matchedTags = currentTags.filter(t => fromSet.has(t.toLowerCase()));
+
+                if (matchedTags.length === 0) {
+                    return {
+                        success: true,
+                        skipped: true,
+                        message: `Không chứa thẻ [${fromTags.join(', ')}] để ghi đè`,
+                        questionId: qId,
+                        oldTags: currentTags,
+                        finalTags: currentTags
+                    };
+                }
+
+                const remainingTags = currentTags.filter(t => !fromSet.has(t.toLowerCase()));
+                finalTags = [...new Set([...remainingTags, ...toTags])];
             } else {
                 finalTags = [...new Set([...currentTags, ...inputTags])];
             }
@@ -225,23 +260,35 @@ document.addEventListener('DOMContentLoaded', () => {
         const mode = getSelectedMode();
 
         // Cập nhật viền & nền của các thẻ card
-        modeCardAppend.className = 'mode-card rounded-lg p-3 relative';
-        modeCardRemove.className = 'mode-card rounded-lg p-3 relative';
-        modeCardReplace.className = 'mode-card rounded-lg p-3 relative';
+        modeCardAppend.className = 'mode-card rounded-xl p-2.5';
+        modeCardRemove.className = 'mode-card rounded-xl p-2.5';
+        if (modeCardOverwrite) modeCardOverwrite.className = 'mode-card rounded-xl p-2.5';
+        modeCardReplace.className = 'mode-card rounded-xl p-2.5';
 
         if (mode === 'append') {
             modeCardAppend.classList.add('selected-append');
-            tagsInputLabel.innerHTML = 'Danh sách thẻ cần thêm <span class="text-red-500">*</span>';
+            if (standardTagInputContainer) standardTagInputContainer.classList.remove('hidden');
+            if (overwriteTagInputContainer) overwriteTagInputContainer.classList.add('hidden');
+            tagsInputLabel.innerHTML = '3. Danh sách thẻ cần thêm <span class="text-rose-500">*</span>';
             tagHelperText.textContent = '💡 Thẻ mới sẽ được gộp vào danh sách thẻ hiện tại của câu hỏi (không trùng lặp).';
             btnText.textContent = '🚀 Bắt đầu thêm thẻ';
         } else if (mode === 'remove') {
             modeCardRemove.classList.add('selected-remove');
-            tagsInputLabel.innerHTML = 'Danh sách thẻ cần xóa <span class="text-red-500">*</span>';
+            if (standardTagInputContainer) standardTagInputContainer.classList.remove('hidden');
+            if (overwriteTagInputContainer) overwriteTagInputContainer.classList.add('hidden');
+            tagsInputLabel.innerHTML = '3. Danh sách thẻ cần xóa <span class="text-rose-500">*</span>';
             tagHelperText.textContent = '💡 Hệ thống sẽ tìm câu hỏi và gỡ bỏ các thẻ này nếu có trong câu hỏi.';
             btnText.textContent = '🗑️ Bắt đầu xóa thẻ';
+        } else if (mode === 'overwrite') {
+            if (modeCardOverwrite) modeCardOverwrite.classList.add('selected-overwrite');
+            if (standardTagInputContainer) standardTagInputContainer.classList.add('hidden');
+            if (overwriteTagInputContainer) overwriteTagInputContainer.classList.remove('hidden');
+            btnText.textContent = '🔁 Bắt đầu đổi thẻ A → B';
         } else if (mode === 'replace') {
             modeCardReplace.classList.add('selected-replace');
-            tagsInputLabel.innerHTML = 'Danh sách thẻ mới thay thế <span class="text-red-500">*</span>';
+            if (standardTagInputContainer) standardTagInputContainer.classList.remove('hidden');
+            if (overwriteTagInputContainer) overwriteTagInputContainer.classList.add('hidden');
+            tagsInputLabel.innerHTML = '3. Danh sách thẻ mới thay thế <span class="text-rose-500">*</span>';
             tagHelperText.textContent = '💡 Toàn bộ thẻ hiện có của câu hỏi sẽ bị thay thế bằng danh sách này.';
             btnText.textContent = '🔄 Bắt đầu thay thế thẻ';
         }
@@ -262,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
         questionCount.textContent = `${ids.length} câu hỏi`;
         questionCount.className = ids.length > 0
             ? 'text-xs font-semibold text-orange-600 font-medium'
-            : 'text-xs text-gray-400 font-medium';
+            : 'text-xs text-slate-400 font-medium';
     }
 
     questionIdsInput.addEventListener('input', () => {
@@ -278,12 +325,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateTagPreview() {
         const mode = getSelectedMode();
+
+        if (mode === 'overwrite') {
+            const fromTags = [...new Set(parseTags(tagInputFrom ? tagInputFrom.value : ''))];
+            const toTags = [...new Set(parseTags(tagInputTo ? tagInputTo.value : ''))];
+
+            if (fromTags.length === 0 && toTags.length === 0) {
+                tagsPreviewContainer.classList.add('hidden');
+                tagsPreviewList.innerHTML = '';
+                return;
+            }
+
+            tagsPreviewContainer.classList.remove('hidden');
+            tagsPreviewList.innerHTML = '';
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex items-center gap-2 flex-wrap text-xs';
+
+            const fromPill = document.createElement('span');
+            fromPill.className = 'tag-pill tag-pill-removed';
+            fromPill.textContent = fromTags.length > 0 ? fromTags.join(', ') : '(Thẻ A chưa nhập)';
+
+            const arrow = document.createElement('span');
+            arrow.className = 'text-purple-600 font-bold text-sm';
+            arrow.textContent = '➔';
+
+            const toPill = document.createElement('span');
+            toPill.className = 'tag-pill tag-pill-added';
+            toPill.textContent = toTags.length > 0 ? toTags.join(', ') : '(Thẻ B chưa nhập)';
+
+            wrapper.appendChild(fromPill);
+            wrapper.appendChild(arrow);
+            wrapper.appendChild(toPill);
+            tagsPreviewList.appendChild(wrapper);
+            return;
+        }
+
         const tags = [...new Set(parseTags(tagInput.value))];
 
         tagCountBadge.textContent = `${tags.length} thẻ`;
         tagCountBadge.className = tags.length > 0
             ? 'text-xs font-semibold text-orange-600 font-medium'
-            : 'text-xs text-gray-400 font-medium';
+            : 'text-xs text-slate-400 font-medium';
 
         if (tags.length === 0) {
             tagsPreviewContainer.classList.add('hidden');
@@ -317,6 +400,20 @@ document.addEventListener('DOMContentLoaded', () => {
         updateTagPreview();
         chrome.storage.local.set({ taggerTagsInput: tagInput.value });
     });
+
+    if (tagInputFrom) {
+        tagInputFrom.addEventListener('input', () => {
+            updateTagPreview();
+            chrome.storage.local.set({ taggerTagFrom: tagInputFrom.value });
+        });
+    }
+
+    if (tagInputTo) {
+        tagInputTo.addEventListener('input', () => {
+            updateTagPreview();
+            chrome.storage.local.set({ taggerTagTo: tagInputTo.value });
+        });
+    }
 
     // ── Log Helper ────────────────────────────────────────────
     function addLog(message, type = 'info') {
@@ -367,14 +464,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Render Tag Pills in Table ─────────────────────────────
     function renderTagsCell(tags, type = 'neutral') {
         if (!tags || tags.length === 0) {
-            return '<span class="text-gray-400 italic text-[11px]">(Trống)</span>';
+            return '<span class="text-slate-400 italic text-[11px]">(Trống)</span>';
         }
 
         return tags.map(tag => {
             let cls = 'tag-pill tag-pill-neutral';
-            if (type === 'added')   cls = 'tag-pill tag-pill-added';
-            if (type === 'removed') cls = 'tag-pill tag-pill-removed';
-            if (type === 'new')     cls = 'tag-pill tag-pill-new';
+            if (type === 'added')       cls = 'tag-pill tag-pill-added';
+            if (type === 'removed')     cls = 'tag-pill tag-pill-removed';
+            if (type === 'new')         cls = 'tag-pill tag-pill-new';
+            if (type === 'overwrite')   cls = 'tag-pill tag-pill-overwrite';
 
             // Escape HTML
             const safe = String(tag).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -403,13 +501,15 @@ document.addEventListener('DOMContentLoaded', () => {
             modeLabel = '<span class="font-medium text-emerald-700">Append</span>';
         } else if (mode === 'remove') {
             modeLabel = '<span class="font-medium text-rose-700">Remove</span>';
+        } else if (mode === 'overwrite') {
+            modeLabel = '<span class="font-medium text-purple-700">A → B</span>';
         } else {
             modeLabel = '<span class="font-medium text-indigo-700">Replace</span>';
         }
 
         // Render old tags and new tags
         const oldTagsHtml = renderTagsCell(oldTags, 'neutral');
-        const newTagsHtml = renderTagsCell(finalTags, mode === 'append' ? 'added' : (mode === 'remove' ? 'neutral' : 'new'));
+        const newTagsHtml = renderTagsCell(finalTags, mode === 'append' ? 'added' : (mode === 'remove' ? 'neutral' : (mode === 'overwrite' ? 'overwrite' : 'new')));
 
         row.innerHTML = `
             <td class="px-3 py-2.5 text-slate-400 font-mono text-[11px]">${index}</td>
@@ -486,7 +586,6 @@ document.addEventListener('DOMContentLoaded', () => {
         copyFailedBtn.classList.add('hidden');
 
         const questionIds = SharedUI.parseMultilineInput(questionIdsInput.value);
-        const targetTags = [...new Set(parseTags(tagInput.value))];
         const mode = getSelectedMode();
         const batchSize = Math.max(1, parseInt(batchSizeInput.value) || 5);
         const delayMs = Math.max(0, parseInt(delayMsInput.value) || 200);
@@ -505,17 +604,42 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Validate tags
-        if (targetTags.length === 0) {
-            SharedUI.showMessage(statusResultDiv, messageP,
-                'Vui lòng nhập ít nhất một thẻ thao tác.', 'error');
-            return;
+        let targetTags;
+        let modeDescription = '';
+
+        if (mode === 'overwrite') {
+            const fromTags = [...new Set(parseTags(tagInputFrom ? tagInputFrom.value : ''))];
+            const toTags = [...new Set(parseTags(tagInputTo ? tagInputTo.value : ''))];
+
+            if (fromTags.length === 0) {
+                SharedUI.showMessage(statusResultDiv, messageP,
+                    'Vui lòng nhập thẻ A cần thay thế.', 'error');
+                return;
+            }
+            if (toTags.length === 0) {
+                SharedUI.showMessage(statusResultDiv, messageP,
+                    'Vui lòng nhập thẻ B mới thay thế vào.', 'error');
+                return;
+            }
+
+            targetTags = { from: fromTags, to: toTags };
+            modeDescription = `Đổi thẻ [${fromTags.join(', ')}] ➔ [${toTags.join(', ')}]`;
+        } else {
+            targetTags = [...new Set(parseTags(tagInput.value))];
+            if (targetTags.length === 0) {
+                SharedUI.showMessage(statusResultDiv, messageP,
+                    'Vui lòng nhập ít nhất một thẻ thao tác.', 'error');
+                return;
+            }
+            modeDescription = mode === 'append' ? 'Thêm thẻ (Append)' : (mode === 'remove' ? 'Xóa thẻ (Remove)' : 'Thay thế thẻ (Replace)');
         }
 
         // Save settings to local storage
         chrome.storage.local.set({
             taggerQuestionIds: questionIdsInput.value,
             taggerTagsInput:   tagInput.value,
+            taggerTagFrom:     tagInputFrom ? tagInputFrom.value : '',
+            taggerTagTo:       tagInputTo ? tagInputTo.value : '',
             taggerMode:        mode,
             taggerBatchSize:   batchSize,
             taggerDelayMs:     delayMs
@@ -536,9 +660,12 @@ document.addEventListener('DOMContentLoaded', () => {
         progressBar.classList.add('progress-active');
         updateProgress(0, 0, 0, 0, questionIds.length);
 
-        const modeDescription = mode === 'append' ? 'Thêm thẻ (Append)' : (mode === 'remove' ? 'Xóa thẻ (Remove)' : 'Thay thế thẻ (Replace)');
         addLog(`═══ Bắt đầu xử lý ${questionIds.length} câu hỏi ═══`, 'header');
-        addLog(`Chế độ: ${modeDescription} | Thẻ thao tác: [${targetTags.join(', ')}]`, 'info');
+        if (mode === 'overwrite') {
+            addLog(`Chế độ: ${modeDescription}`, 'info');
+        } else {
+            addLog(`Chế độ: ${modeDescription} | Thẻ thao tác: [${targetTags.join(', ')}]`, 'info');
+        }
         addLog(`Cấu hình: Batch=${batchSize}, Delay=${delayMs}ms`, 'dim');
 
         let successCount = 0;
@@ -609,7 +736,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         status = 'skipped';
                         statusText = 'Bỏ qua';
                         skippedCount++;
-                        note = res.message || 'Không chứa thẻ cần xóa';
+                        note = res.message || (mode === 'overwrite' ? 'Không chứa thẻ A để ghi đè' : 'Không chứa thẻ cần xóa');
                         addLog(`[${doneCount}/${questionIds.length}] ℹ ID ${qid}: ${note}`, 'warning');
                     } else {
                         status = 'success';
@@ -621,6 +748,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         } else if (mode === 'remove') {
                             const removed = oldTags.filter(t => !finalTags.includes(t));
                             note = `Đã xóa ${removed.length} thẻ: [${removed.join(', ')}]`;
+                        } else if (mode === 'overwrite') {
+                            const fromList = targetTags.from || [];
+                            const toList = targetTags.to || [];
+                            note = `Đã đổi [${fromList.join(', ')}] thành [${toList.join(', ')}]`;
                         } else {
                             note = `Đã thay thế bằng ${finalTags.length} thẻ`;
                         }

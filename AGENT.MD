@@ -196,6 +196,27 @@ Aeglobal Extension/
 
 ---
 
+### 6. Question Tagger (`module/question-tagger/`)
+
+**Chức năng:** Quản lý gắn, gỡ, thay thế, hoặc ghi đè thẻ câu hỏi hàng loạt.
+
+**4 Chế độ hoạt động:**
+- **Thêm vào (Append):** Gộp thêm thẻ mới vào danh sách thẻ hiện có của câu hỏi (loại bỏ trùng lặp).
+- **Xóa thẻ (Remove):** Kiểm tra câu hỏi có chứa thẻ chỉ định hay không, nếu có thì gỡ bỏ thẻ đó và cập nhật lại. Nếu câu hỏi không chứa thẻ cần xóa, hệ thống sẽ tự động bỏ qua (Skipped).
+- **Đổi thẻ A → B (Overwrite):** Ghi đè thẻ A bằng thẻ B, giữ nguyên tất cả các thẻ khác của câu hỏi. Nếu câu hỏi không chứa thẻ A, tự động bỏ qua.
+- **Thay thế tất cả (Replace):** Thay thế toàn bộ danh sách thẻ hiện tại bằng danh sách thẻ mới.
+
+**Luồng xử lý:**
+1. Nhận danh sách **Question IDs** và cấu hình thẻ thao tác.
+2. Với mỗi câu hỏi:
+   - Tìm câu hỏi qua `/question/index/search` để lấy thông tin và danh sách tags hiện tại.
+   - Xử lý mảng tags theo chế độ (`append`, `remove`, `overwrite`, `replace`).
+   - Gửi yêu cầu cập nhật qua `/exercise/editor/update-question`.
+3. Hỗ trợ chạy theo Batch song song và thiết lập độ trễ (delay ms).
+4. Hiển thị bảng kết quả chi tiết, thanh tiến trình, log real-time và xuất CSV.
+
+---
+
 ## Module Dùng Chung (Shared Modules)
 
 ### `shared-auth.js` — SharedAuth

@@ -123,17 +123,23 @@
             box-shadow: 0 0 0 1px #4f46e5;
         }
 
+        .mode-card.selected-overwrite {
+            border-color: #8b5cf6;
+            background-color: #f5f3ff;
+            box-shadow: 0 0 0 1px #8b5cf6;
+        }
+
         /* ── Tag pill badges ── */
         .tag-pill {
             display: inline-flex;
             align-items: center;
-            padding: 3px 9px;
+            padding: 2.5px 8px;
             border-radius: 9999px;
-            font-size: 11.5px;
+            font-size: 11px;
             font-weight: 500;
             line-height: 1.25;
-            margin: 2px 3px 2px 0;
-            max-width: 200px;
+            margin: 2px 2px 2px 0;
+            max-width: 180px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -168,303 +174,377 @@
             color: #3730a3;
             border: 1px solid #c7d2fe;
         }
+
+        .tag-pill-overwrite {
+            background: #f5f3ff;
+            color: #6d28d9;
+            border: 1px solid #ddd6fe;
+        }
     </style>
 </head>
 
-<body class="bg-slate-50 p-4 md:p-6 lg:p-8 text-slate-800">
-    <div class="max-w-5xl mx-auto space-y-5">
+<body class="bg-slate-50 p-4 md:p-6 text-slate-800">
+    <div class="max-w-[1550px] mx-auto space-y-4">
 
-        <!-- Header -->
+        <!-- Top Header & Auth Bar -->
         <div
-            class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-5 border-b border-slate-200 gap-3">
-            <div>
-                <h1 class="text-2xl font-bold text-slate-900 flex items-center gap-2.5">
-                    <span
-                        class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 text-lg">🏷️</span>
-                    Quản lý thẻ câu hỏi hàng loạt
-                </h1>
-                <p class="text-xs text-slate-500 mt-1 font-medium">
-                    Thêm thẻ mới, gỡ thẻ theo danh sách, hoặc thay thế thẻ cho câu hỏi LotusLMS
-                </p>
-            </div>
-
-        </div>
-
-        <!-- Auth Info Card -->
-        <div class="bg-white border border-slate-200 rounded-2xl p-4 text-xs shadow-sm">
-            <div class="flex flex-wrap items-center justify-between gap-y-2 text-slate-600">
-                <div class="flex flex-wrap items-center gap-x-6 gap-y-1">
-                    <span class="flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        UID: <span id="displayUid" class="font-semibold text-slate-800">Đang tải...</span>
-                    </span>
-                    <span>Token: <span id="displayToken" class="font-semibold text-slate-800 font-mono">Đang
-                            tải...</span></span>
-                    <span class="text-slate-400">Lưu lúc: <span id="displaySavedDate" class="text-slate-600">Đang
-                            tải...</span></span>
+            class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <span
+                    class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 text-lg">🏷️</span>
+                <div>
+                    <h1 class="text-lg md:text-xl font-bold text-slate-900 leading-tight">Quản lý thẻ câu hỏi hàng loạt
+                    </h1>
+                    <p class="text-xs text-slate-500 font-medium mt-0.5">Thêm thẻ mới, gỡ thẻ theo danh sách, hoặc thay
+                        thế thẻ câu hỏi LotusLMS</p>
                 </div>
-                <span class="text-[11px] text-slate-400 font-normal">Tự động đồng bộ từ tài khoản LotusLMS</span>
+            </div>
+
+            <!-- Auth status & Nav -->
+            <div class="flex flex-wrap items-center gap-2.5">
+                <div
+                    class="flex flex-wrap items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-600">
+                    <span class="flex items-center gap-1.5 font-semibold text-slate-800">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        UID: <span id="displayUid" class="font-bold">Đang tải...</span>
+                    </span>
+                    <span class="text-slate-300">|</span>
+                    <span>Token: <span id="displayToken"
+                            class="font-mono text-slate-800 font-semibold max-w-[130px] truncate inline-block align-middle"
+                            title="Token xác thực">Đang tải...</span></span>
+                    <span class="text-slate-300">|</span>
+                    <span class="text-slate-400 text-[11px]">Lưu: <span id="displaySavedDate"
+                            class="text-slate-600">Đang tải...</span></span>
+                </div>
+
+                <a href="/popup.html"
+                    class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-slate-900 transition-colors shadow-sm">
+                    ‹ Menu tiện ích
+                </a>
             </div>
         </div>
 
-        <!-- Status Message Banner -->
-        <div id="statusResult" class="hidden p-4 rounded-xl text-xs font-medium transition-all shadow-sm">
-            <p id="message"></p>
-        </div>
+        <!-- Main Multi-Column Grid (Left: Config / Right: Results & Monitoring) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 
-        <!-- Main Form Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            <!-- ══════════ CỘT TRÁI (CONFIG & INPUTS - 5 cols) ══════════ -->
+            <div class="lg:col-span-5 xl:col-span-4 space-y-4">
 
-            <!-- Cột trái: Question IDs (5 cols) -->
-            <div class="lg:col-span-5 flex flex-col">
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex-1 flex flex-col">
-                    <div class="flex items-center justify-between mb-2">
-                        <label for="question-ids" class="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                            Danh sách ID câu hỏi <span class="text-rose-500">*</span>
+                <!-- Main Config Card -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+
+                    <!-- Section 1: Chế độ xử lý thẻ -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                            1. Chọn chế độ xử lý <span class="text-rose-500">*</span>
                         </label>
-                        <span id="questionCount" class="text-xs text-slate-400 font-semibold">0 câu hỏi</span>
+                        <div class="grid grid-cols-2 gap-2">
+
+                            <!-- Mode Append -->
+                            <div id="modeCardAppend" class="mode-card selected-append rounded-xl p-2.5">
+                                <label class="flex items-start gap-1.5 cursor-pointer">
+                                    <input type="radio" name="tagMode" value="append" checked
+                                        class="mt-0.5 text-emerald-600 focus:ring-emerald-500">
+                                    <div>
+                                        <div class="font-bold text-xs text-slate-800">Thêm vào</div>
+                                        <p class="text-[10px] text-slate-500 mt-0.5 leading-tight">Gộp thẻ mới, giữ thẻ
+                                            cũ</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Mode Remove -->
+                            <div id="modeCardRemove" class="mode-card rounded-xl p-2.5">
+                                <label class="flex items-start gap-1.5 cursor-pointer">
+                                    <input type="radio" name="tagMode" value="remove"
+                                        class="mt-0.5 text-rose-600 focus:ring-rose-500">
+                                    <div>
+                                        <div class="font-bold text-xs text-slate-800">Xóa thẻ</div>
+                                        <p class="text-[10px] text-slate-500 mt-0.5 leading-tight">Gỡ bỏ thẻ chỉ định
+                                        </p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Mode Overwrite (A -> B) -->
+                            <div id="modeCardOverwrite" class="mode-card rounded-xl p-2.5">
+                                <label class="flex items-start gap-1.5 cursor-pointer">
+                                    <input type="radio" name="tagMode" value="overwrite"
+                                        class="mt-0.5 text-purple-600 focus:ring-purple-500">
+                                    <div>
+                                        <div class="font-bold text-xs text-slate-800">Đổi thẻ A → B</div>
+                                        <p class="text-[10px] text-slate-500 mt-0.5 leading-tight">Ghi đè A thành B, giữ
+                                            thẻ khác</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Mode Replace -->
+                            <div id="modeCardReplace" class="mode-card rounded-xl p-2.5">
+                                <label class="flex items-start gap-1.5 cursor-pointer">
+                                    <input type="radio" name="tagMode" value="replace"
+                                        class="mt-0.5 text-indigo-600 focus:ring-indigo-500">
+                                    <div>
+                                        <div class="font-bold text-xs text-slate-800">Thay thế tất cả</div>
+                                        <p class="text-[10px] text-slate-500 mt-0.5 leading-tight">Ghi đè toàn bộ bằng
+                                            thẻ mới</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                        </div>
                     </div>
-                    <textarea id="question-ids" rows="12"
-                        class="w-full font-mono text-xs text-slate-800 border border-slate-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y custom-scroll flex-1 bg-slate-50/50 hover:bg-white transition-colors"
-                        placeholder="Mỗi ID câu hỏi trên một dòng:&#10;105234&#10;105235&#10;105236..."></textarea>
-                    <div class="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100">
-                        <p class="text-[11px] text-slate-400">Hỗ trợ dán cột từ file Excel</p>
-                        <button id="clearIdsBtn" type="button"
-                            class="text-[11px] text-slate-400 hover:text-rose-600 font-medium transition-colors">
-                            Xóa hết
+
+                    <hr class="border-slate-100">
+
+                    <!-- Section 2: Danh sách ID câu hỏi -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label for="question-ids" class="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                2. Danh sách ID câu hỏi <span class="text-rose-500">*</span>
+                            </label>
+                            <span id="questionCount" class="text-xs text-slate-400 font-semibold">0 câu hỏi</span>
+                        </div>
+                        <textarea id="question-ids" rows="7"
+                            class="w-full font-mono text-xs text-slate-800 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y custom-scroll bg-slate-50/50 hover:bg-white transition-colors"
+                            placeholder="Mỗi ID câu hỏi trên một dòng:&#10;105234&#10;105235&#10;6a293a0e776daa4a88079f13..."></textarea>
+                        <div class="flex items-center justify-between mt-1.5">
+                            <p class="text-[11px] text-slate-400">Hỗ trợ dán cột từ Excel</p>
+                            <button id="clearIdsBtn" type="button"
+                                class="text-[11px] text-slate-400 hover:text-rose-600 font-medium transition-colors">
+                                Xóa hết
+                            </button>
+                        </div>
+                    </div>
+
+                    <hr class="border-slate-100">
+
+                    <!-- Section 3: Danh sách thẻ thao tác -->
+                    <div>
+                        <!-- Standard Tag Input (Append, Remove, Replace All) -->
+                        <div id="standardTagInputContainer">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label id="tagsInputLabel" for="tagInput"
+                                    class="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                    3. Danh sách thẻ <span class="text-rose-500">*</span>
+                                </label>
+                                <span id="tagCountBadge" class="text-xs text-slate-400 font-semibold">0 thẻ</span>
+                            </div>
+
+                            <textarea id="tagInput" rows="2"
+                                class="w-full text-xs text-slate-800 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent custom-scroll bg-slate-50/50 hover:bg-white transition-colors"
+                                placeholder="Phân tách bằng dấu phẩy (,) hoặc xuống dòng (VD: Toán 10, Đề số 1)..."></textarea>
+
+                            <p id="tagHelperText" class="text-[11px] text-slate-400 mt-1">
+                                💡 Thẻ mới sẽ được gộp vào danh sách thẻ hiện tại của từng câu hỏi.
+                            </p>
+                        </div>
+
+                        <!-- Overwrite Tag Input (A -> B) -->
+                        <div id="overwriteTagInputContainer" class="hidden space-y-2.5">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                    3. Cấu hình đổi thẻ (A → B) <span class="text-rose-500">*</span>
+                                </span>
+                            </div>
+
+                            <div>
+                                <label for="tagInputFrom" class="text-[11px] font-semibold text-rose-600 block mb-1">
+                                    Thẻ cần thay thế (Thẻ A)
+                                </label>
+                                <input type="text" id="tagInputFrom"
+                                    class="w-full text-xs text-slate-800 border border-slate-200 rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-slate-50/50 hover:bg-white transition-colors"
+                                    placeholder="Nhập thẻ A cần tìm (VD: Toán 10 cũ)...">
+                            </div>
+
+                            <div>
+                                <label for="tagInputTo" class="text-[11px] font-semibold text-emerald-600 block mb-1">
+                                    Thẻ mới thay thế vào (Thẻ B)
+                                </label>
+                                <input type="text" id="tagInputTo"
+                                    class="w-full text-xs text-slate-800 border border-slate-200 rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-slate-50/50 hover:bg-white transition-colors"
+                                    placeholder="Nhập thẻ B mới thay thế (VD: Toán 10 mới 2024)...">
+                            </div>
+
+                            <p class="text-[11px] text-slate-400 mt-1">
+                                💡 Câu hỏi có Thẻ A sẽ được đổi thành Thẻ B. Tất cả các thẻ khác của câu hỏi được giữ
+                                nguyên.
+                            </p>
+                        </div>
+
+                        <!-- Preview Chips -->
+                        <div id="tagsPreviewContainer" class="hidden mt-2 pt-2 border-t border-slate-100">
+                            <span class="text-[10px] text-slate-400 block mb-1 font-semibold uppercase">Xem
+                                trước:</span>
+                            <div id="tagsPreviewList" class="flex flex-wrap items-center gap-1"></div>
+                        </div>
+                    </div>
+
+                    <hr class="border-slate-100">
+
+                    <!-- Section 4: Batch Config & Action Buttons -->
+                    <div class="pt-1">
+                        <div class="flex items-center justify-between gap-2 mb-3">
+                            <div class="flex items-center gap-3 text-xs text-slate-600">
+                                <div class="flex items-center gap-1">
+                                    <span class="text-slate-400 text-[11px]">Batch:</span>
+                                    <input type="number" id="batchSize" value="5" min="1" max="20"
+                                        class="w-12 border border-slate-200 rounded-lg px-1.5 py-0.5 text-center text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50">
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-slate-400 text-[11px]">Delay:</span>
+                                    <input type="number" id="delayMs" value="200" min="0" step="50" max="2000"
+                                        class="w-14 border border-slate-200 rounded-lg px-1.5 py-0.5 text-center text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50">
+                                    <span class="text-slate-400 text-[11px]">ms</span>
+                                </div>
+                            </div>
+
+                            <button id="stopProcessBtn" type="button"
+                                class="hidden px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 hover:bg-rose-100 rounded-xl transition-colors">
+                                ⏹ Dừng
+                            </button>
+                        </div>
+
+                        <button id="startProcessBtn" type="button"
+                            class="w-full py-2.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl transition-all shadow-sm shadow-indigo-200 flex items-center justify-center gap-2">
+                            <svg id="btnSpinner" class="hidden animate-spin h-3.5 w-3.5 text-white"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                            <span id="btnText">🚀 Bắt đầu cập nhật thẻ</span>
                         </button>
                     </div>
+
                 </div>
+
             </div>
 
-            <!-- Cột phải: Chế độ & Danh sách thẻ (7 cols) -->
-            <div class="lg:col-span-7 flex flex-col space-y-4">
+            <!-- ══════════ CỘT PHẢI (MONITORING & RESULTS - 7 cols) ══════════ -->
+            <div class="lg:col-span-7 xl:col-span-8 space-y-4">
 
-                <!-- Mode Selection -->
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
-                        Chọn chế độ xử lý thẻ <span class="text-rose-500">*</span>
-                    </label>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-
-                        <!-- Mode Append -->
-                        <div id="modeCardAppend" class="mode-card selected-append rounded-xl p-3.5">
-                            <label class="flex items-start gap-2.5 cursor-pointer">
-                                <input type="radio" name="tagMode" value="append" checked
-                                    class="mt-0.5 text-emerald-600 focus:ring-emerald-500">
-                                <div>
-                                    <div class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-                                        <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-                                        Thêm vào (Append)
-                                    </div>
-                                    <p class="text-[11px] text-slate-500 mt-1 leading-snug">
-                                        Giữ thẻ cũ, bổ sung thẻ mới. Tự động lọc trùng.
-                                    </p>
-                                </div>
-                            </label>
-                        </div>
-
-                        <!-- Mode Remove -->
-                        <div id="modeCardRemove" class="mode-card rounded-xl p-3.5">
-                            <label class="flex items-start gap-2.5 cursor-pointer">
-                                <input type="radio" name="tagMode" value="remove"
-                                    class="mt-0.5 text-rose-600 focus:ring-rose-500">
-                                <div>
-                                    <div class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-                                        <span class="w-2 h-2 rounded-full bg-rose-500 inline-block"></span>
-                                        Xóa thẻ (Remove)
-                                    </div>
-                                    <p class="text-[11px] text-slate-500 mt-1 leading-snug">
-                                        Tìm & gỡ các thẻ chỉ định khỏi câu hỏi.
-                                    </p>
-                                </div>
-                            </label>
-                        </div>
-
-                        <!-- Mode Replace -->
-                        <div id="modeCardReplace" class="mode-card rounded-xl p-3.5">
-                            <label class="flex items-start gap-2.5 cursor-pointer">
-                                <input type="radio" name="tagMode" value="replace"
-                                    class="mt-0.5 text-indigo-600 focus:ring-indigo-500">
-                                <div>
-                                    <div class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-                                        <span class="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span>
-                                        Thay thế (Replace)
-                                    </div>
-                                    <p class="text-[11px] text-slate-500 mt-1 leading-snug">
-                                        Ghi đè toàn bộ thẻ cũ bằng danh sách mới.
-                                    </p>
-                                </div>
-                            </label>
-                        </div>
-
-                    </div>
+                <!-- Status Message Banner -->
+                <div id="statusResult" class="hidden p-3.5 rounded-xl text-xs font-medium transition-all shadow-sm"
+                    style="margin-top: 0; margin-bottom: 1rem;">
+                    <p id="message"></p>
                 </div>
 
-                <!-- Tag Inputs -->
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <!-- Progress Card -->
+                <div id="progressCard" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4"
+                    style="margin-top: 0">
                     <div class="flex items-center justify-between mb-2">
-                        <label id="tagsInputLabel" for="tagInput"
-                            class="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                            Danh sách thẻ cần thêm <span class="text-rose-500">*</span>
-                        </label>
-                        <span id="tagCountBadge" class="text-xs text-slate-400 font-semibold">0 thẻ</span>
+                        <span id="progressStatusText"
+                            class="text-xs font-bold text-slate-700 uppercase tracking-wider">Tiến trình xử lý</span>
+                        <span id="progressPercent" class="text-xs font-mono font-bold text-indigo-600">0%</span>
                     </div>
-
-                    <textarea id="tagInput" rows="3"
-                        class="w-full text-xs text-slate-800 border border-slate-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent custom-scroll bg-slate-50/50 hover:bg-white transition-colors"
-                        placeholder="Nhập các thẻ, phân tách bằng dấu phẩy (,) hoặc mỗi thẻ một dòng (VD: Toán 10, Đề thi số 1, Khảo sát 2024)..."></textarea>
-
-                    <p id="tagHelperText" class="text-[11px] text-slate-400 mt-1.5">
-                        💡 Thẻ mới sẽ được gộp vào danh sách thẻ hiện tại của từng câu hỏi.
-                    </p>
-
-                    <!-- Preview Chips -->
-                    <div id="tagsPreviewContainer" class="hidden mt-3 pt-3 border-t border-slate-100">
-                        <span class="text-[11px] text-slate-400 block mb-1.5 font-medium">Xem trước thẻ:</span>
-                        <div id="tagsPreviewList" class="flex flex-wrap items-center gap-1"></div>
+                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden mb-3">
+                        <div id="progressBar"
+                            class="bg-gradient-to-r from-indigo-500 to-blue-600 h-2 rounded-full transition-all duration-200"
+                            style="width: 0%"></div>
+                    </div>
+                    <div class="grid grid-cols-5 gap-2 text-center">
+                        <div class="bg-slate-50 rounded-xl p-2 border border-slate-100">
+                            <span class="text-[10px] text-slate-400 font-medium block">Tổng cộng</span>
+                            <span id="statTotal" class="text-sm font-bold text-slate-700 font-mono">0</span>
+                        </div>
+                        <div class="bg-emerald-50 rounded-xl p-2 border border-emerald-100">
+                            <span class="text-[10px] text-emerald-600 font-medium block">Thành công</span>
+                            <span id="statSuccess" class="text-sm font-bold text-emerald-700 font-mono">0</span>
+                        </div>
+                        <div class="bg-amber-50 rounded-xl p-2 border border-amber-100">
+                            <span class="text-[10px] text-amber-600 font-medium block">Bỏ qua</span>
+                            <span id="statSkipped" class="text-sm font-bold text-amber-700 font-mono">0</span>
+                        </div>
+                        <div class="bg-rose-50 rounded-xl p-2 border border-rose-100">
+                            <span class="text-[10px] text-rose-600 font-medium block">Thất bại</span>
+                            <span id="statFailed" class="text-sm font-bold text-rose-700 font-mono">0</span>
+                        </div>
+                        <div class="bg-slate-50 rounded-xl p-2 border border-slate-100">
+                            <span class="text-[10px] text-slate-400 font-medium block">Còn lại</span>
+                            <span id="statRemaining" class="text-sm font-bold text-slate-700 font-mono">0</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Batch config & Execution Buttons -->
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
-                    <div class="flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex items-center gap-4 text-xs text-slate-600">
-                            <div class="flex items-center gap-1.5">
-                                <span class="font-medium text-slate-500">Batch size:</span>
-                                <input type="number" id="batchSize" value="5" min="1" max="20"
-                                    class="w-14 border border-slate-200 rounded-lg px-2 py-1 text-center text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50">
-                            </div>
-                            <div class="flex items-center gap-1.5">
-                                <span class="font-medium text-slate-500">Delay:</span>
-                                <input type="number" id="delayMs" value="200" min="0" step="50" max="2000"
-                                    class="w-16 border border-slate-200 rounded-lg px-2 py-1 text-center text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50">
-                                <span class="text-slate-400">ms</span>
-                            </div>
+                <!-- Results Table Card -->
+                <div id="resultsCard" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <div>
+                            <p class="text-xs font-bold text-slate-800 uppercase tracking-wider">📊 Kết quả chi tiết</p>
+                            <span id="resultsSummary" class="text-xs text-slate-500"></span>
                         </div>
-
                         <div class="flex items-center gap-2">
-                            <button id="stopProcessBtn" type="button"
-                                class="hidden px-4 py-2 text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 hover:bg-rose-100 rounded-xl transition-colors">
-                                ⏹ Dừng lại
+                            <button id="copyFailedBtn" type="button"
+                                class="hidden text-xs px-2.5 py-1 bg-rose-50 text-rose-600 border border-rose-200 rounded-lg hover:bg-rose-100 transition-colors font-semibold">
+                                📋 Copy IDs thất bại
                             </button>
-                            <button id="startProcessBtn" type="button"
-                                class="px-5 py-2.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl transition-all shadow-sm shadow-indigo-200 flex items-center gap-2">
-                                <svg id="btnSpinner" class="hidden animate-spin h-3.5 w-3.5 text-white"
-                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                        stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                    </path>
-                                </svg>
-                                <span id="btnText">🚀 Bắt đầu cập nhật thẻ</span>
+                            <button id="exportCsvBtn" type="button"
+                                class="text-xs px-2.5 py-1 bg-slate-50 text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors font-semibold flex items-center gap-1">
+                                📥 Xuất CSV
                             </button>
                         </div>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-200 max-h-[380px] custom-scroll">
+                        <table class="min-w-full divide-y divide-slate-200 text-xs">
+                            <thead class="bg-slate-800 text-slate-200 sticky top-0 z-10">
+                                <tr>
+                                    <th
+                                        class="px-3 py-2.5 text-left font-semibold uppercase tracking-wider w-10 text-slate-300">
+                                        #</th>
+                                    <th
+                                        class="px-3 py-2.5 text-left font-semibold uppercase tracking-wider w-24 text-slate-300">
+                                        ID Câu hỏi</th>
+                                    <th
+                                        class="px-3 py-2.5 text-left font-semibold uppercase tracking-wider w-24 text-slate-300">
+                                        Trạng thái</th>
+                                    <th
+                                        class="px-3 py-2.5 text-left font-semibold uppercase tracking-wider w-20 text-slate-300">
+                                        Chế độ</th>
+                                    <th
+                                        class="px-3 py-2.5 text-left font-semibold uppercase tracking-wider min-w-40 text-slate-300">
+                                        Tags trước</th>
+                                    <th
+                                        class="px-3 py-2.5 text-left font-semibold uppercase tracking-wider min-w-40 text-slate-300">
+                                        Tags sau</th>
+                                    <th
+                                        class="px-3 py-2.5 text-left font-semibold uppercase tracking-wider text-slate-300">
+                                        Ghi chú</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsTableBody" class="bg-white divide-y divide-slate-100">
+                                <tr id="emptyPlaceholderRow">
+                                    <td colspan="7" class="px-4 py-8 text-center text-slate-400 italic text-xs">
+                                        Chưa có kết quả xử lý. Vui lòng nhập ID câu hỏi và bấm Bắt đầu.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Live Log Card -->
+                <div id="logCard" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                            <span>📋</span> Nhật ký xử lý realtime
+                        </p>
+                        <button id="clearLogBtn" type="button"
+                            class="text-xs text-slate-400 hover:text-slate-600 transition-colors font-medium">
+                            Xóa log
+                        </button>
+                    </div>
+                    <div id="logContainer"
+                        class="log-container bg-slate-950 rounded-xl p-3 font-mono text-xs text-slate-300 h-36 overflow-y-auto space-y-1 custom-scroll border border-slate-800">
+                        <p class="text-slate-500 italic">Log tiến trình sẽ xuất hiện tại đây khi chạy...</p>
                     </div>
                 </div>
 
             </div>
-        </div>
 
-        <!-- Progress Card -->
-        <div id="progressCard" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 hidden">
-            <div class="flex items-center justify-between mb-2">
-                <span id="progressStatusText" class="text-xs font-bold text-slate-700 uppercase tracking-wider">Đang xử
-                    lý...</span>
-                <span id="progressPercent" class="text-xs font-mono font-bold text-indigo-600">0%</span>
-            </div>
-            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden mb-4">
-                <div id="progressBar"
-                    class="bg-gradient-to-r from-indigo-500 to-blue-600 h-2 rounded-full transition-all duration-200"
-                    style="width: 0%"></div>
-            </div>
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
-                <div class="bg-slate-50 rounded-xl p-2.5 border border-slate-100">
-                    <span class="text-[11px] text-slate-400 font-medium block">Tổng cộng</span>
-                    <span id="statTotal" class="text-sm font-bold text-slate-700 font-mono">0</span>
-                </div>
-                <div class="bg-emerald-50 rounded-xl p-2.5 border border-emerald-100">
-                    <span class="text-[11px] text-emerald-600 font-medium block">✓ Thành công</span>
-                    <span id="statSuccess" class="text-sm font-bold text-emerald-700 font-mono">0</span>
-                </div>
-                <div class="bg-amber-50 rounded-xl p-2.5 border border-amber-100">
-                    <span class="text-[11px] text-amber-600 font-medium block">ℹ Bỏ qua</span>
-                    <span id="statSkipped" class="text-sm font-bold text-amber-700 font-mono">0</span>
-                </div>
-                <div class="bg-rose-50 rounded-xl p-2.5 border border-rose-100">
-                    <span class="text-[11px] text-rose-600 font-medium block">✗ Thất bại</span>
-                    <span id="statFailed" class="text-sm font-bold text-rose-700 font-mono">0</span>
-                </div>
-                <div class="bg-slate-50 rounded-xl p-2.5 border border-slate-100">
-                    <span class="text-[11px] text-slate-400 font-medium block">Còn lại</span>
-                    <span id="statRemaining" class="text-sm font-bold text-slate-700 font-mono">0</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Live Log Card -->
-        <div id="logCard" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 hidden">
-            <div class="flex items-center justify-between mb-2.5">
-                <p class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                    <span>📋</span> Nhật ký xử lý realtime
-                </p>
-                <button id="clearLogBtn" type="button"
-                    class="text-xs text-slate-400 hover:text-slate-600 transition-colors font-medium">
-                    Xóa log
-                </button>
-            </div>
-            <div id="logContainer"
-                class="log-container bg-slate-950 rounded-xl p-3.5 font-mono text-xs text-slate-300 h-44 overflow-y-auto space-y-1 custom-scroll border border-slate-800">
-                <p class="text-slate-500 italic">Log tiến trình sẽ xuất hiện tại đây khi chạy...</p>
-            </div>
-        </div>
-
-        <!-- Results Table Card -->
-        <div id="resultsCard" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 hidden">
-            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                <div>
-                    <p class="text-xs font-bold text-slate-800 uppercase tracking-wider">📊 Kết quả chi tiết</p>
-                    <span id="resultsSummary" class="text-xs text-slate-500"></span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button id="copyFailedBtn" type="button"
-                        class="hidden text-xs px-3 py-1.5 bg-rose-50 text-rose-600 border border-rose-200 rounded-xl hover:bg-rose-100 transition-colors font-semibold">
-                        📋 Copy IDs thất bại
-                    </button>
-                    <button id="exportCsvBtn" type="button"
-                        class="text-xs px-3 py-1.5 bg-slate-50 text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors font-semibold flex items-center gap-1.5">
-                        📥 Xuất file CSV
-                    </button>
-                </div>
-            </div>
-
-            <div class="overflow-x-auto rounded-xl border border-slate-200">
-                <table class="min-w-full divide-y divide-slate-200 text-xs">
-                    <thead class="bg-slate-800 text-slate-200">
-                        <tr>
-                            <th class="px-3 py-3 text-left font-semibold uppercase tracking-wider w-12 text-slate-300">#
-                            </th>
-                            <th class="px-3 py-3 text-left font-semibold uppercase tracking-wider w-24 text-slate-300">
-                                ID Câu hỏi</th>
-                            <th class="px-3 py-3 text-left font-semibold uppercase tracking-wider w-28 text-slate-300">
-                                Trạng thái</th>
-                            <th class="px-3 py-3 text-left font-semibold uppercase tracking-wider w-24 text-slate-300">
-                                Chế độ</th>
-                            <th
-                                class="px-3 py-3 text-left font-semibold uppercase tracking-wider min-w-44 text-slate-300">
-                                Tags trước</th>
-                            <th
-                                class="px-3 py-3 text-left font-semibold uppercase tracking-wider min-w-44 text-slate-300">
-                                Tags sau</th>
-                            <th class="px-3 py-3 text-left font-semibold uppercase tracking-wider text-slate-300">Ghi
-                                chú</th>
-                        </tr>
-                    </thead>
-                    <tbody id="resultsTableBody" class="bg-white divide-y divide-slate-100">
-                    </tbody>
-                </table>
-            </div>
         </div>
 
     </div>
