@@ -280,6 +280,13 @@ document.addEventListener('DOMContentLoaded', () => {
         window.open(chrome.runtime.getURL('module/question-deleter/index.html'));
     });
 
+    const openQuestionTagger = document.getElementById('openQuestionTagger');
+    if (openQuestionTagger) {
+        openQuestionTagger.addEventListener('click', () => {
+            window.open(chrome.runtime.getURL('module/question-tagger/index.html'));
+        });
+    }
+
     const openPhanQuyen = document.getElementById('openPhanQuyen');
     openPhanQuyen.addEventListener('click', () => {
         window.open(chrome.runtime.getURL('module/phanquyen/index.html'));

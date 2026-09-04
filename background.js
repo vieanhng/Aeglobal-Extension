@@ -122,25 +122,38 @@ const moveQuestionsToBank = async (questionIdsToMove, bankId, uid, token) => {
 const findQuestion = async (questionId, uid, token) => {
     try {
         // Step 1: Search câu hỏi
-        const searchUrl = `${API_BASE}/question/index/search?_sand_get_total=0&search_from_bank=1&ntype=question&q=${questionId}&submit=1&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
+        const searchUrl = `${API_BASE}/question/index/search?_sand_get_total=0&search_from_bank=1&ntype=question&q=${encodeURIComponent(questionId)}&submit=1&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
 
         const searchResponse = await fetch(searchUrl, { method: "POST" });
         const searchData = await searchResponse.json();
 
         if (searchData.success && searchData.result && searchData.result.length > 0) {
-            const questionData = searchData.result.find(q => q.id === questionId);
+            const questionData = searchData.result.find(q =>
+                String(q.id) === String(questionId) || String(q.iid) === String(questionId)
+            );
 
-            if (questionData && questionData.question_bank) {
-                console.log(`Đã tìm thấy ngân hàng ID: ${questionData.question_bank}`);
+            if (questionData) {
+                let bankName = "N/A";
+                let bankUrl = "#";
 
-                // Step 2: Lấy thông tin chi tiết ngân hàng (Bank Name)
-                const bankUrl = `${API_BASE}/question-bank/editor/fetch-node?iid=${questionData.question_bank}&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
-                const bankResponse = await fetch(bankUrl, { method: "POST" });
-                const bankData = await bankResponse.json();
+                if (questionData.question_bank) {
+                    bankUrl = `https://${DOMAIN}.lotuslms.com/admin/question-bank/${questionData.question_bank}`;
+                    try {
+                        const bankUrlApi = `${API_BASE}/question-bank/editor/fetch-node?iid=${questionData.question_bank}&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
+                        const bankResponse = await fetch(bankUrlApi, { method: "POST" });
+                        const bankData = await bankResponse.json();
+                        if (bankData.result && bankData.result.name) {
+                            bankName = bankData.result.name;
+                        }
+                    } catch (e) {
+                        console.warn(`Không lấy được tên ngân hàng: ${e.message}`);
+                    }
+                }
 
                 return {
-                    url: `https://${DOMAIN}.lotuslms.com/admin/question-bank/${questionData.question_bank}`,
-                    bank_name: bankData.result ? bankData.result.name : "N/A",
+                    id: questionData.id || questionId,
+                    url: bankUrl,
+                    bank_name: bankName,
                     tags: questionData.tags || [] // Trả về thêm tags để dùng cho các hàm sau
                 };
             }
@@ -155,30 +168,55 @@ const findQuestion = async (questionId, uid, token) => {
 };
 
 /**
- * Cập nhật Tags với 2 tùy chọn: append (thêm vào) hoặc replace (thay thế tất cả)
- * @param {Object} questionObject - Object chứa thông tin câu hỏi
- * @param {Array|string} tags - Danh sách tag mới hoặc tag cần thêm
- * @param {string} mode - 'append' hoặc 'replace' (mặc định là 'append')
+ * Cập nhật Tags với 3 tùy chọn: append (thêm vào), replace (thay thế tất cả), remove (xóa thẻ)
+ * @param {Object} questionObject - Object chứa thông tin câu hỏi (id, tags, ...)
+ * @param {Array|string} tags - Danh sách tag thao tác
+ * @param {string} mode - 'append', 'replace', hoặc 'remove' (mặc định là 'append')
  */
 const updateQuestionTags = async (questionObject, tags, mode = 'append', uid, token) => {
-    console.log(`Đang ${mode === 'append' ? 'thêm' : 'thay thế'} tags cho ID: ${questionObject.id}`);
+    const qId = questionObject.id || questionObject.iid;
+    console.log(`Đang xử lý tags (chế độ: ${mode}) cho ID: ${qId}`);
 
     try {
-        let finalTags = Array.isArray(tags) ? tags : [tags];
+        const inputTags = (Array.isArray(tags) ? tags : [tags])
+            .map(t => typeof t === 'string' ? t.trim() : String(t).trim())
+            .filter(t => t.length > 0);
 
-        // --- XỬ LÝ LOGIC APPEND ---
+        const currentTags = Array.isArray(questionObject.tags) ? [...questionObject.tags] : [];
+        let finalTags = [];
+
         if (mode === 'append') {
-            // Bước 1: Tìm thông tin hiện tại để lấy các tags cũ
-            const currentTags = questionObject.tags || [];
+            // Hợp nhất tags hiện có và tags mới, loại bỏ trùng lặp
+            finalTags = [...new Set([...currentTags, ...inputTags])];
+        } else if (mode === 'replace') {
+            // Thay thế toàn bộ bằng danh sách tags mới
+            finalTags = [...new Set(inputTags)];
+        } else if (mode === 'remove') {
+            // Kiểm tra xem có tag nào cần xóa nằm trong currentTags không
+            const tagsToRemoveSet = new Set(inputTags.map(t => t.toLowerCase()));
+            const matchedTags = currentTags.filter(t => tagsToRemoveSet.has(t.toLowerCase()));
 
-            // Bước 2: Hợp nhất (tránh trùng lặp)
-            finalTags = [...new Set([...currentTags, ...finalTags])];
+            if (matchedTags.length === 0) {
+                console.log(`ID ${qId} không chứa bất kỳ thẻ nào cần xóa. Bỏ qua cập nhật.`);
+                return {
+                    success: true,
+                    skipped: true,
+                    message: "Không chứa thẻ cần xóa",
+                    oldTags: currentTags,
+                    finalTags: currentTags
+                };
+            }
+
+            // Loại bỏ các tags cần xóa
+            finalTags = currentTags.filter(t => !tagsToRemoveSet.has(t.toLowerCase()));
+        } else {
+            finalTags = [...new Set([...currentTags, ...inputTags])];
         }
 
         // --- GỬI REQUEST CẬP NHẬT ---
         const formData = new FormData();
-        formData.append('iid', String(questionObject.id));
-        formData.append('id', String(questionObject.id));
+        formData.append('iid', String(qId));
+        formData.append('id', String(qId));
         formData.append('ntype', 'question');
         formData.append('rootNode[ntype]', 'question-bank');
         formData.append('_sand_step', 'tags');
@@ -199,16 +237,29 @@ const updateQuestionTags = async (questionObject, tags, mode = 'append', uid, to
         const data = await response.json();
 
         if (data.success) {
-            console.log(`Cập nhật thành công (${mode}). Danh sách tag mới:`, finalTags);
-            return true;
+            console.log(`Cập nhật thành công (${mode}) cho ID ${qId}. Danh sách tag mới:`, finalTags);
+            return {
+                success: true,
+                skipped: false,
+                oldTags: currentTags,
+                finalTags: finalTags
+            };
         } else {
-            console.error(`Lỗi từ server: ${data.message || 'Unknown'}`);
-            return false;
+            console.error(`Lỗi từ server khi cập nhật ID ${qId}: ${data.message || 'Unknown'}`);
+            return {
+                success: false,
+                error: data.message || 'Unknown server error',
+                oldTags: currentTags
+            };
         }
 
     } catch (error) {
-        console.error(`Lỗi khi update tag:`, error);
-        return false;
+        console.error(`Lỗi khi update tag cho ID ${qId}:`, error);
+        return {
+            success: false,
+            error: error.message,
+            oldTags: questionObject.tags || []
+        };
     }
 };
 
@@ -345,7 +396,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     sendLogToUI(`  Tags to apply: ${allTags.join(', ')}`, 'info');
 
                     const tagSuccess = await updateQuestionTags(item.duplicateObject, allTags, 'append', uid, token);
-                    if (tagSuccess) {
+                    if (tagSuccess && tagSuccess.success) {
                         console.log(`✓ [${i + 1}/${duplicatedQuestionMap.length}] Successfully tagged question ID: ${item.duplicatedId}`);
                         sendLogToUI(`✓ [${i + 1}/${duplicatedQuestionMap.length}] Successfully tagged question ID: ${item.duplicatedId}`, 'success');
                         taggedCount++;
@@ -419,6 +470,70 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         process();
         return true;
+    }
+
+    // ============================================================
+    // Cập nhật thẻ câu hỏi theo ID (append, replace, remove)
+    // ============================================================
+    if (request.action === "updateQuestionTags") {
+        const { uid, token, questionId, tags, mode } = request;
+
+        (async () => {
+            try {
+                if (!questionId) {
+                    sendResponse({ success: false, error: "ID câu hỏi không hợp lệ" });
+                    return;
+                }
+
+                // 1. Tìm thông tin câu hỏi
+                const searchUrl = `${API_BASE}/question/index/search?_sand_get_total=0&search_from_bank=1&ntype=question&q=${encodeURIComponent(questionId)}&submit=1&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
+                const searchResponse = await fetch(searchUrl, { method: "POST" });
+                const searchData = await searchResponse.json();
+
+                if (!searchData.success || !searchData.result || searchData.result.length === 0) {
+                    sendResponse({
+                        success: false,
+                        questionId,
+                        error: "Không tìm thấy câu hỏi"
+                    });
+                    return;
+                }
+
+                const qIdLower = String(questionId).toLowerCase().trim();
+                const questionData = (Array.isArray(searchData.result) ? searchData.result : []).find(q =>
+                    (q.id && String(q.id).toLowerCase() === qIdLower) ||
+                    (q.iid && String(q.iid).toLowerCase() === qIdLower) ||
+                    (q._id && String(q._id).toLowerCase() === qIdLower)
+                ) || (searchData.result.length === 1 ? searchData.result[0] : null);
+
+                if (!questionData) {
+                    sendResponse({
+                        success: false,
+                        questionId,
+                        error: "Không tìm thấy câu hỏi khớp với ID"
+                    });
+                    return;
+                }
+
+                // 2. Gọi hàm updateQuestionTags
+                const result = await updateQuestionTags(questionData, tags, mode || 'append', uid, token);
+
+                sendResponse({
+                    ...result,
+                    questionId: questionData.id || questionId,
+                    mode: mode || 'append'
+                });
+            } catch (error) {
+                console.error(`Lỗi updateQuestionTags ${questionId}:`, error);
+                sendResponse({
+                    success: false,
+                    questionId,
+                    error: error.message
+                });
+            }
+        })();
+
+        return true; // Giữ channel mở cho async
     }
 
     if (request.action === "exportQuestions") {

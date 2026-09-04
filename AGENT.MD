@@ -44,6 +44,9 @@ Aeglobal Extension/
     ├── question-deleter/
     │   ├── index.html         # Giao diện xóa câu hỏi hàng loạt
     │   └── script.js          # Logic xóa (batch, progress, live log)
+    ├── question-tagger/
+    │   ├── index.html         # Giao diện quản lý thẻ câu hỏi (Thêm/Xóa/Thay thế)
+    │   └── script.js          # Logic cập nhật thẻ (append, remove, replace)
     └── bank-iid-viewer/
         ├── index.html         # Giao diện xem IID ngân hàng
         └── script.js          # Logic tra cứu IID
@@ -86,6 +89,7 @@ Aeglobal Extension/
 | `findQuestion` | Tìm ngân hàng chứa câu hỏi theo ID |
 | `exportQuestions` | Xuất tất cả ID câu hỏi từ một ngân hàng |
 | `deleteQuestion` | Xóa câu hỏi theo ID (gọi `dev-steve-api`) |
+| `updateQuestionTags` | Cập nhật thẻ câu hỏi theo ID (Append, Remove, Replace) |
 
 ---
 
