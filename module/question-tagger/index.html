@@ -336,35 +336,52 @@
                             </p>
                         </div>
 
-                        <!-- Overwrite Tag Input (A -> B) -->
+                        <!-- Overwrite Tag Input (Multiple A -> B pairs) -->
                         <div id="overwriteTagInputContainer" class="hidden space-y-2.5">
                             <div class="flex items-center justify-between mb-1">
                                 <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">
                                     3. Cấu hình đổi thẻ (A → B) <span class="text-rose-500">*</span>
                                 </span>
+                                <button id="toggleBulkPairModeBtn" type="button"
+                                    class="text-[11px] font-semibold text-purple-600 hover:text-purple-800 transition-colors">
+                                    📋 Dán nhiều cặp / Excel
+                                </button>
                             </div>
 
-                            <div>
-                                <label for="tagInputFrom" class="text-[11px] font-semibold text-rose-600 block mb-1">
-                                    Thẻ cần thay thế (Thẻ A)
-                                </label>
-                                <input type="text" id="tagInputFrom"
-                                    class="w-full text-xs text-slate-800 border border-slate-200 rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-slate-50/50 hover:bg-white transition-colors"
-                                    placeholder="Nhập thẻ A cần tìm (VD: Toán 10 cũ)...">
+                            <!-- Mode A: Danh sách cặp thẻ trực quan (Dynamic Rows) -->
+                            <div id="pairsListModeContainer" class="space-y-2">
+                                <div id="pairsListContainer"
+                                    class="space-y-1.5 max-h-56 overflow-y-auto custom-scroll pr-0.5">
+                                    <!-- Dynamic pair rows will be rendered here -->
+                                </div>
+
+                                <div class="flex items-center justify-between pt-1">
+                                    <button id="addPairRowBtn" type="button"
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-xl transition-colors">
+                                        + Thêm cặp thẻ đổi
+                                    </button>
+                                    <span id="pairCountBadge" class="text-[11px] text-slate-400 font-medium">0
+                                        cặp</span>
+                                </div>
                             </div>
 
-                            <div>
-                                <label for="tagInputTo" class="text-[11px] font-semibold text-emerald-600 block mb-1">
-                                    Thẻ mới thay thế vào (Thẻ B)
-                                </label>
-                                <input type="text" id="tagInputTo"
-                                    class="w-full text-xs text-slate-800 border border-slate-200 rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-slate-50/50 hover:bg-white transition-colors"
-                                    placeholder="Nhập thẻ B mới thay thế (VD: Toán 10 mới 2024)...">
+                            <!-- Mode B: Nhập nhiều dòng / Excel (Bulk Textarea) -->
+                            <div id="bulkTextareaModeContainer" class="hidden space-y-1.5">
+                                <textarea id="bulkPairsTextarea" rows="4"
+                                    class="w-full font-mono text-xs text-slate-800 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500 custom-scroll bg-slate-50/50 hover:bg-white transition-colors"
+                                    placeholder="Nhập hoặc dán mỗi dòng một cặp thẻ:&#10;Toán 10 cũ -> Toán 10 mới&#10;Toán 11 cũ -> Toán 11 mới&#10;Hoặc dán 2 cột từ Excel (Thẻ A [Tab] Thẻ B)..."></textarea>
+                                <div class="flex items-center justify-between text-[10px] text-slate-400">
+                                    <span>Hỗ trợ: <code>Thẻ A -> Thẻ B</code> hoặc dán 2 cột từ Excel</span>
+                                    <button id="applyBulkPairsBtn" type="button"
+                                        class="text-purple-600 hover:text-purple-800 font-semibold">
+                                        Áp dụng dạng bảng
+                                    </button>
+                                </div>
                             </div>
 
                             <p class="text-[11px] text-slate-400 mt-1">
-                                💡 Câu hỏi có Thẻ A sẽ được đổi thành Thẻ B. Tất cả các thẻ khác của câu hỏi được giữ
-                                nguyên.
+                                💡 Câu hỏi có Thẻ A sẽ được đổi thành Thẻ B tương ứng. Tất cả các thẻ khác của câu hỏi
+                                được giữ nguyên.
                             </p>
                         </div>
 
@@ -534,7 +551,7 @@
                         </button>
                     </div>
                     <div id="logContainer"
-                        class="log-container bg-slate-950 rounded-xl p-3 font-mono text-xs text-slate-300 h-36 overflow-y-auto space-y-1 custom-scroll border border-slate-800">
+                        class="log-container bg-black rounded-xl p-3 font-mono text-xs text-slate-300 h-36 overflow-y-auto space-y-1 custom-scroll border border-slate-800">
                         <p class="text-slate-500 italic">Log tiến trình sẽ xuất hiện tại đây khi chạy...</p>
                     </div>
                 </div>

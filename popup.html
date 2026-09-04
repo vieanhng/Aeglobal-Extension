@@ -8,15 +8,24 @@
     <link href="lib/tailwind.min.css" rel="stylesheet">
     <style>
         * {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             box-sizing: border-box;
         }
 
+        html {
+            overflow: hidden;
+            height: fit-content;
+        }
+
         body {
-            width: 340px;
-            background: #f9fafb;
-            padding: 16px;
+            width: 350px;
+            background: #f8fafc;
+            padding: 12px;
             margin: 0;
+            color: #1e293b;
+            font-size: 13px;
+            overflow: hidden;
+            /* Triệt tiêu thanh cuộn ngoài cùng */
         }
 
         /* Fade-in khi mở popup */
@@ -33,52 +42,164 @@
         }
 
         body {
-            animation: fadeSlideIn 0.18s ease-out;
+            animation: fadeSlideIn 0.15s ease-out;
         }
 
         /* Auth card */
-        .auth-card {
+        .auth-bar {
             background: #ffffff;
-            border: 1px solid #e5e7eb;
+            border: 1px solid #e2e8f0;
             border-radius: 10px;
-            padding: 12px 14px;
+            padding: 8px 12px;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
         }
 
         /* Online pulse dot */
         .status-dot {
-            width: 8px;
-            height: 8px;
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
-            background: #22c55e;
+            background: #10b981;
             flex-shrink: 0;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
+            animation: dotPulse 2s infinite;
         }
 
         @keyframes dotPulse {
 
             0%,
             100% {
-                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
             }
 
             50% {
-                box-shadow: 0 0 0 4px rgba(34, 197, 94, 0);
+                box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
             }
         }
 
-        .status-dot {
-            animation: dotPulse 2s infinite;
-        }
-
-        /* Token mono truncate */
         .token-mono {
-            font-family: 'Courier New', monospace;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
             font-size: 11px;
-            color: #9ca3af;
+            color: #64748b;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            max-width: 185px;
+            max-width: 170px;
             display: inline-block;
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Category Tabs */
+        .tab-btn {
+            padding: 5px 9px;
+            font-size: 11.5px;
+            font-weight: 500;
+            border-radius: 6px;
+            color: #64748b;
+            background: #f1f5f9;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .tab-btn:hover {
+            color: #0f172a;
+            background: #e2e8f0;
+        }
+
+        .tab-btn.active {
+            background: #ea580c;
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(234, 88, 12, 0.3);
+        }
+
+        .tab-count {
+            display: inline-block;
+            font-size: 10px;
+            padding: 0 4.5px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.08);
+            line-height: 14px;
+        }
+
+        .tab-btn.active .tab-count {
+            background: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+        }
+
+        /* Search input */
+        .search-container {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 7px 28px 7px 30px;
+            font-size: 12px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #334155;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: #f97316;
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 9px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            pointer-events: none;
+        }
+
+        .search-clear {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            cursor: pointer;
+            display: none;
+            padding: 2px;
+        }
+
+        .search-clear:hover {
+            color: #475569;
+        }
+
+        /* Group headers */
+        .group-header {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #94a3b8;
+            margin: 10px 2px 4px 2px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .group-header::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
         }
 
         /* ── Feature buttons ── */
@@ -87,87 +208,235 @@
             align-items: center;
             gap: 10px;
             width: 100%;
-            padding: 9px 12px;
+            padding: 8px 10px;
             border-radius: 8px;
-            border: 1px solid #e5e7eb;
+            border: 1px solid #e2e8f0;
             background: #ffffff;
             cursor: pointer;
             text-align: left;
-            transition: border-color 0.15s, background 0.15s, transform 0.15s;
+            transition: all 0.15s ease;
             position: relative;
-            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
         }
 
         .feat-btn:hover {
-            border-color: #fed7aa;
-            background: #fff7ed;
-            transform: translateX(2px);
+            border-color: #fdba74;
+            background: #fffbf7;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(234, 88, 12, 0.08);
+        }
+
+        .feat-icon-box {
+            width: 32px;
+            height: 32px;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: transform 0.15s ease;
+        }
+
+        .feat-btn:hover .feat-icon-box {
+            transform: scale(1.05);
+        }
+
+        /* Icon box colors */
+        .icon-export {
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        .icon-ops {
+            background: #eef2ff;
+            color: #6366f1;
+        }
+
+        .icon-view {
+            background: #f0f9ff;
+            color: #0284c7;
+        }
+
+        .icon-danger {
+            background: #fef2f2;
+            color: #ef4444;
+        }
+
+        .icon-amber {
+            background: #fffbeb;
+            color: #d97706;
+        }
+
+        .feat-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .feat-title-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            line-height: 1.3;
         }
 
         .feat-label {
-            font-size: 13px;
-            font-weight: 500;
-            color: #374151;
-            flex: 1;
-            line-height: 1.35;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #1e293b;
             transition: color 0.15s;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .feat-btn:hover .feat-label {
             color: #c2410c;
         }
 
+        .feat-desc {
+            font-size: 11px;
+            color: #64748b;
+            line-height: 1.25;
+            margin-top: 1px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .feat-badge {
+            font-size: 9.5px;
+            font-weight: 600;
+            padding: 1px 5px;
+            border-radius: 4px;
+            flex-shrink: 0;
+            line-height: 14px;
+        }
+
+        .badge-orange {
+            background: #ffedd5;
+            color: #c2410c;
+        }
+
+        .badge-indigo {
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+
+        .badge-red {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .badge-blue {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
         .feat-arrow {
-            font-size: 14px;
-            color: #d1d5db;
-            transition: color 0.15s, transform 0.15s;
+            font-size: 13px;
+            color: #cbd5e1;
+            transition: all 0.15s;
             flex-shrink: 0;
         }
 
         .feat-btn:hover .feat-arrow {
             color: #ea580c;
-            transform: translateX(3px);
+            transform: translateX(2px);
         }
 
-        /* ── Section divider ── */
-        .section-divider {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin: 12px 0 10px;
+        /* ── Scrollbar Styling (Dọc & Ngang) ── */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 rgba(226, 232, 240, 0.4);
         }
 
-        .section-divider::before,
-        .section-divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: #f3f4f6;
+        /* Thanh cuộn ngang cho Category Tabs */
+        #categoryTabs {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 rgba(226, 232, 240, 0.4);
+            padding-bottom: 5px;
         }
 
-        /* ── Small action buttons ── */
-        .small-btn {
-            padding: 4px 10px;
-            font-size: 11px;
-            font-weight: 500;
-            border-radius: 6px;
-            border: 1px solid transparent;
-            cursor: pointer;
-            transition: background 0.15s, border-color 0.15s;
+        #categoryTabs::-webkit-scrollbar {
+            height: 4px;
         }
 
-        /* ── Scrollbar ── */
+        #categoryTabs::-webkit-scrollbar-track {
+            background: rgba(226, 232, 240, 0.5);
+            border-radius: 9999px;
+        }
+
+        #categoryTabs::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+            transition: background 0.2s ease;
+        }
+
+        #categoryTabs::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        #categoryTabs::-webkit-scrollbar-thumb:active {
+            background: #ea580c;
+        }
+
+        /* Thanh cuộn dọc cho Danh sách chức năng */
+        .features-list {
+            max-height: 275px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 4px;
+            scroll-behavior: smooth;
+        }
+
         .features-list::-webkit-scrollbar {
-            width: 3px;
+            width: 5px;
+            height: 5px;
         }
 
         .features-list::-webkit-scrollbar-track {
-            background: transparent;
+            background: rgba(226, 232, 240, 0.4);
+            border-radius: 9999px;
+            margin: 4px 0;
         }
 
         .features-list::-webkit-scrollbar-thumb {
-            background: #e5e7eb;
-            border-radius: 2px;
+            background: #cbd5e1;
+            border-radius: 9999px;
+            transition: background 0.2s ease;
+        }
+
+        .features-list::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .features-list::-webkit-scrollbar-thumb:active {
+            background: #ea580c;
+        }
+
+        /* Style mặc định cho tất cả thanh cuộn ngang khác nếu có */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(226, 232, 240, 0.4);
+            border-radius: 9999px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+            transition: background 0.2s ease;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        ::-webkit-scrollbar-thumb:active {
+            background: #ea580c;
         }
 
         /* ── Toggle Switch ── */
@@ -175,34 +444,35 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 8px 12px;
+            padding: 8px 10px;
             border-radius: 8px;
-            border: 1px solid #e5e7eb;
+            border: 1px solid #e2e8f0;
             background: #ffffff;
         }
 
         .setting-label {
-            font-size: 12.5px;
-            color: #374151;
+            font-size: 12px;
+            color: #334155;
             font-weight: 500;
             flex: 1;
-            line-height: 1.35;
+            line-height: 1.3;
+            cursor: pointer;
         }
 
         .setting-label small {
             display: block;
-            font-size: 10.5px;
-            color: #9ca3af;
+            font-size: 10px;
+            color: #94a3b8;
             font-weight: 400;
             margin-top: 1px;
         }
 
         .toggle-switch {
             position: relative;
-            width: 34px;
-            height: 20px;
+            width: 32px;
+            height: 18px;
             flex-shrink: 0;
-            margin-left: 10px;
+            margin-left: 8px;
         }
 
         .toggle-switch input {
@@ -214,7 +484,7 @@
         .toggle-track {
             position: absolute;
             inset: 0;
-            background: #d1d5db;
+            background: #cbd5e1;
             border-radius: 20px;
             cursor: pointer;
             transition: background 0.2s;
@@ -223,14 +493,14 @@
         .toggle-track::before {
             content: '';
             position: absolute;
-            width: 14px;
-            height: 14px;
+            width: 12px;
+            height: 12px;
             left: 3px;
             top: 3px;
             background: white;
             border-radius: 50%;
             transition: transform 0.2s;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
 
         .toggle-switch input:checked+.toggle-track {
@@ -240,157 +510,446 @@
         .toggle-switch input:checked+.toggle-track::before {
             transform: translateX(14px);
         }
+
+        /* Small action buttons */
+        .small-btn {
+            padding: 3px 8px;
+            font-size: 11px;
+            font-weight: 500;
+            border-radius: 5px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        /* No results state */
+        .empty-search {
+            text-align: center;
+            padding: 24px 12px;
+            color: #94a3b8;
+        }
+
+        .empty-search svg {
+            margin: 0 auto 8px;
+            color: #cbd5e1;
+        }
     </style>
 </head>
 
 <body>
 
     <!-- ── Header ── -->
-    <div class="mb-4">
-        <h1 class="text-base font-semibold text-gray-800">AEGlobal Tools</h1>
-        <p class="text-xs text-gray-400 mt-0.5">LotusLMS Extension</p>
+    <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+            <div>
+                <div class="flex items-center gap-1.5">
+                    <h1 class="text-sm font-bold text-slate-800 leading-none">AEGlobal Tools</h1>
+                    <span
+                        class="text-[10px] font-semibold text-orange-600 bg-orange-50 border border-orange-200 rounded px-1 leading-none py-0.5">v3.1</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-0.5 leading-none">LotusLMS Assistant</p>
+            </div>
+        </div>
+        <button id="toggleAuthDetailBtn"
+            class="text-xs text-slate-400 hover:text-slate-600 p-1 rounded hover:bg-slate-100 transition-colors"
+            title="Thông tin kết nối">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </button>
     </div>
 
     <!-- ── Auth Section ── -->
-    <div id="authInfoSection">
+    <div id="authInfoSection" class="mb-3">
 
-        <!-- Đã có thông tin -->
-        <div id="savedInfoDisplay" class="auth-card hidden">
-            <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center gap-1.5">
+        <!-- Đã có thông tin (Collapsible/Compact) -->
+        <div id="savedInfoDisplay" class="auth-bar hidden">
+            <!-- Compact summary row -->
+            <div class="flex items-center justify-between cursor-pointer" id="authSummaryRow">
+                <div class="flex items-center gap-1.5 min-w-0">
                     <div class="status-dot"></div>
-                    <span class="text-xs font-semibold text-gray-700">Đã xác thực</span>
+                    <span class="text-xs font-semibold text-slate-700">Đã kết nối</span>
+                    <span class="text-slate-300">|</span>
+                    <span class="text-xs text-slate-500 font-medium truncate">UID: <b id="displayUid"
+                            class="text-slate-700"></b></span>
+                    <button id="copyUidCompactBtn" class="text-slate-400 hover:text-orange-600 p-0.5 rounded transition-colors flex-shrink-0" title="Sao chép UID">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                    </button>
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <button id="updateAuthInfoBtn"
-                        class="small-btn text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100">
-                        Cập nhật
-                    </button>
-                    <button id="clearAuthInfoBtn"
-                        class="small-btn text-red-500 bg-red-50 border-red-200 hover:bg-red-100">
-                        Xóa
-                    </button>
+                    <span id="authToggleIcon" class="text-xs text-slate-400 font-bold transition-transform">▾</span>
                 </div>
             </div>
-            <div class="space-y-1">
-                <div class="flex items-center gap-2">
-                    <span class="text-xs text-gray-400 w-9 flex-shrink-0">UID</span>
-                    <span id="displayUid" class="text-xs font-semibold text-gray-700"></span>
+
+            <!-- Detailed info (expandable) -->
+            <div id="authDetailsContainer" class="hidden mt-2 pt-2 border-t border-slate-100 space-y-2">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="text-[11px] text-slate-400 w-10 flex-shrink-0">UID</span>
+                        <span id="displayUidDetail" class="text-xs font-mono font-semibold text-slate-700"></span>
+                    </div>
+                    <button id="copyUidBtn" class="small-btn text-slate-600 bg-slate-100 hover:bg-slate-200 border-slate-200 flex items-center gap-1 flex-shrink-0" title="Sao chép UID">
+                        📋 Copy UID
+                    </button>
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2 min-w-0 flex-1">
+                        <span class="text-[11px] text-slate-400 w-10 flex-shrink-0">Token</span>
+                        <span id="displayToken" class="token-mono flex-1"></span>
+                    </div>
+                    <button id="copyTokenBtn" class="small-btn text-slate-600 bg-slate-100 hover:bg-slate-200 border-slate-200 flex items-center gap-1 flex-shrink-0" title="Sao chép Token">
+                        📋 Copy Token
+                    </button>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="text-xs text-gray-400 w-9 flex-shrink-0">Token</span>
-                    <span id="displayToken" class="token-mono"></span>
+                    <span class="text-[11px] text-slate-400 w-10 flex-shrink-0">Lưu</span>
+                    <span id="savedDate" class="text-[11px] text-slate-500"></span>
                 </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-xs text-gray-400 w-9 flex-shrink-0">Lưu</span>
-                    <span id="savedDate" class="text-xs text-gray-500"></span>
+                <div class="flex items-center justify-end gap-2 pt-1">
+                    <button id="updateAuthInfoBtn"
+                        class="small-btn text-amber-700 bg-amber-50 border-amber-200 hover:bg-amber-100">
+                        🔄 Cập nhật
+                    </button>
+                    <button id="clearAuthInfoBtn"
+                        class="small-btn text-red-600 bg-red-50 border-red-200 hover:bg-red-100">
+                        🗑️ Xóa
+                    </button>
                 </div>
             </div>
         </div>
 
         <!-- Chưa có thông tin -->
-        <div id="loginPromptSection" class="auth-card hidden">
-            <div class="flex items-center gap-3">
-                <div class="flex-1 min-w-0">
-                    <p class="text-xs font-medium text-gray-700">Chưa có thông tin xác thực</p>
-                    <p class="text-xs text-gray-400 mt-0.5">Mở LotusLMS để lấy tự động</p>
+        <div id="loginPromptSection" class="auth-bar hidden bg-amber-50 border-amber-200">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="text-amber-500 text-sm">⚠️</span>
+                    <div class="min-w-0">
+                        <p class="text-xs font-semibold text-amber-900 leading-tight">Chưa có xác thực</p>
+                        <p class="text-[10px] text-amber-700 leading-tight">Đăng nhập LotusLMS rồi bấm lấy</p>
+                    </div>
                 </div>
                 <button id="getAuthInfoBtn"
-                    class="flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-white bg-orange-600 hover:bg-orange-700 rounded-md transition-colors">
+                    class="flex-shrink-0 px-2.5 py-1 text-xs font-semibold text-white bg-orange-600 hover:bg-orange-700 rounded transition-colors shadow-sm">
                     Lấy ngay
                 </button>
             </div>
         </div>
 
         <!-- Status message -->
-        <p id="statusMessage" class="mt-2 text-xs text-center min-h-4"></p>
+        <p id="statusMessage" class="mt-1.5 text-xs text-center min-h-0 empty:hidden"></p>
     </div>
 
-    <!-- ── Section Divider ── -->
-    <div class="section-divider">
-        <span class="text-xs text-gray-300 font-medium">Chức năng</span>
+    <!-- ── Quick Search Bar ── -->
+    <div class="search-container mb-2.5">
+        <svg class="search-icon w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input type="text" id="featSearchInput" class="search-input"
+            placeholder="Tìm nhanh chức năng (vd: thẻ, xóa, excel...)" autocomplete="off">
+        <button id="clearSearchBtn" class="search-clear" title="Xóa tìm kiếm">✕</button>
     </div>
 
-    <!-- ── Feature Buttons ── -->
-    <div class="features-list flex flex-col gap-1.5" style="max-height: 260px; overflow-y: auto; padding-right: 2px;">
-
-        <button id="openSidePanel" class="feat-btn">
-            <span class="feat-label">Xem câu hỏi trong phiếu</span>
-            <span class="feat-arrow">›</span>
+    <!-- ── Category Filter Tabs ── -->
+    <div class="flex items-center gap-1.5 mb-2.5 overflow-x-auto pb-0.5" id="categoryTabs">
+        <button class="tab-btn active" data-category="all">
+            Tất cả <span class="tab-count">12</span>
         </button>
-
-        <button id="openLotusExtractor" class="feat-btn">
-            <span class="feat-label">Xuất câu hỏi từ folder <span
-                    class="text-orange-500 font-normal">(Excel/JSON)</span></span>
-            <span class="feat-arrow">›</span>
+        <button class="tab-btn" data-category="export">
+            📥 Xuất file <span class="tab-count">4</span>
         </button>
-
-        <button id="openFolderStructureExporter" class="feat-btn">
-            <span class="feat-label">Xuất cấu trúc folder <span
-                    class="text-orange-500 font-normal">(Excel/JSON)</span></span>
-            <span class="feat-arrow">›</span>
+        <button class="tab-btn" data-category="ops">
+            ⚡ Thao tác <span class="tab-count">5</span>
         </button>
-
-        <button id="openSyllabusExtractor" class="feat-btn">
-            <span class="feat-label">Xuất câu hỏi từ Syllabus <span
-                    class="text-orange-500 font-normal">(Excel/JSON)</span></span>
-            <span class="feat-arrow">›</span>
+        <button class="tab-btn" data-category="tools">
+            🔍 Tra cứu <span class="tab-count">3</span>
         </button>
+    </div>
 
-        <button id="openQuestionExporter" class="feat-btn">
-            <span class="feat-label">Xuất câu hỏi từ ngân hàng <span
-                    class="text-orange-500 font-normal">(Excel/JSON)</span></span>
-            <span class="feat-arrow">›</span>
-        </button>
+    <!-- ── Feature List ── -->
+    <div class="features-list flex flex-col gap-1.5" id="featuresListContainer">
 
-        <button id="openQuestionDuplicator" class="feat-btn">
-            <span class="feat-label">Nhân bản câu hỏi</span>
-            <span class="feat-arrow">›</span>
-        </button>
+        <!-- ── NHÓM 1: Xuất dữ liệu ── -->
+        <div class="group-section" data-group="export">
+            <div class="group-header">
+                <span>📥 Xuất dữ liệu</span>
+            </div>
+            <div class="flex flex-col gap-1.5">
 
-        <button id="openQuestionMover" class="feat-btn">
-            <span class="feat-label">Di chuyển câu hỏi</span>
-            <span class="feat-arrow">›</span>
-        </button>
+                <!-- 1. Xuất câu hỏi folder -->
+                <button id="openLotusExtractor" class="feat-btn" data-category="export"
+                    data-keywords="xuat cau hoi thu muc folder excel json extract">
+                    <div class="feat-icon-box icon-export">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 11v6m0 0l-2-2m2 2l2-2" />
+                        </svg>
+                    </div>
+                    <div class="feat-content">
+                        <div class="feat-title-row">
+                            <span class="feat-label">Xuất câu hỏi từ Folder</span>
+                            <span class="feat-badge badge-orange">Excel/JSON</span>
+                        </div>
+                        <div class="feat-desc">Trích xuất câu hỏi từ thư mục cụ thể</div>
+                    </div>
+                    <span class="feat-arrow">›</span>
+                </button>
 
-        <button id="openQuestionDeleter" class="feat-btn">
-            <span class="feat-label">Xóa câu hỏi <span class="text-red-400 font-normal">(hàng loạt)</span></span>
-            <span class="feat-arrow">›</span>
-        </button>
+                <!-- 2. Xuất cấu trúc folder -->
+                <button id="openFolderStructureExporter" class="feat-btn" data-category="export"
+                    data-keywords="xuat cau truc folder cay thu muc excel json tree">
+                    <div class="feat-icon-box icon-export">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 10h16M4 14h8m-8 4h8" />
+                        </svg>
+                    </div>
+                    <div class="feat-content">
+                        <div class="feat-title-row">
+                            <span class="feat-label">Xuất cấu trúc Folder</span>
+                            <span class="feat-badge badge-orange">Excel/JSON</span>
+                        </div>
+                        <div class="feat-desc">Trích xuất sơ đồ cây toàn bộ thư mục</div>
+                    </div>
+                    <span class="feat-arrow">›</span>
+                </button>
 
-        <button id="openQuestionTagger" class="feat-btn">
-            <span class="feat-label">Quản lý thẻ câu hỏi <span class="text-indigo-500 font-normal">(Thêm / Xóa)</span></span>
-            <span class="feat-arrow">›</span>
-        </button>
+                <!-- 3. Xuất câu hỏi từ Syllabus -->
+                <button id="openSyllabusExtractor" class="feat-btn" data-category="export"
+                    data-keywords="xuat cau hoi syllabus giao trinh chuong trinh excel json">
+                    <div class="feat-icon-box icon-export">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                    </div>
+                    <div class="feat-content">
+                        <div class="feat-title-row">
+                            <span class="feat-label">Xuất câu hỏi từ Syllabus</span>
+                            <span class="feat-badge badge-orange">Excel/JSON</span>
+                        </div>
+                        <div class="feat-desc">Trích xuất câu hỏi từ khung bài học Syllabus</div>
+                    </div>
+                    <span class="feat-arrow">›</span>
+                </button>
 
-        <button id="openPhanQuyen" class="feat-btn">
-            <span class="feat-label">Phân quyền hàng loạt</span>
-            <span class="feat-arrow">›</span>
-        </button>
+                <!-- 4. Xuất câu hỏi từ ngân hàng -->
+                <button id="openQuestionExporter" class="feat-btn" data-category="export"
+                    data-keywords="xuat cau hoi ngan hang de bank excel json export">
+                    <div class="feat-icon-box icon-export">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                        </svg>
+                    </div>
+                    <div class="feat-content">
+                        <div class="feat-title-row">
+                            <span class="feat-label">Xuất câu hỏi từ ngân hàng</span>
+                            <span class="feat-badge badge-orange">Excel/JSON</span>
+                        </div>
+                        <div class="feat-desc">Tải dữ liệu câu hỏi từ ngân hàng</div>
+                    </div>
+                    <span class="feat-arrow">›</span>
+                </button>
 
-        <button id="openQuestionFinder" class="feat-btn">
-            <span class="feat-label">Tìm câu hỏi</span>
-            <span class="feat-arrow">›</span>
-        </button>
+            </div>
+        </div>
 
-        <button id="openBankIidViewer" class="feat-btn">
-            <span class="feat-label">Tra cứu IID ngân hàng</span>
-            <span class="feat-arrow">›</span>
-        </button>
+        <!-- ── NHÓM 2: Thao tác câu hỏi ── -->
+        <div class="group-section" data-group="ops">
+            <div class="group-header">
+                <span>⚡ Quản lý & Thao tác</span>
+            </div>
+            <div class="flex flex-col gap-1.5">
+
+                <!-- 5. Quản lý thẻ câu hỏi -->
+                <button id="openQuestionTagger" class="feat-btn" data-category="ops"
+                    data-keywords="quan ly the tag gan the xoa the hang loat add remove tagger">
+                    <div class="feat-icon-box icon-ops">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                    </div>
+                    <div class="feat-content">
+                        <div class="feat-title-row">
+                            <span class="feat-label">Quản lý thẻ câu hỏi</span>
+                            <span class="feat-badge badge-indigo">Gắn/Gỡ thẻ</span>
+                        </div>
+                        <div class="feat-desc">Thêm hoặc xóa tag hàng loạt theo danh sách ID</div>
+                    </div>
+                    <span class="feat-arrow">›</span>
+                </button>
+
+                <!-- 6. Phân quyền hàng loạt -->
+                <button id="openPhanQuyen" class="feat-btn" data-category="ops"
+                    data-keywords="phan quyen hang loat permission access role user">
+                    <div class="feat-icon-box icon-ops">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </div>
+                    <div class="feat-content">
+                        <div class="feat-title-row">
+                            <span class="feat-label">Phân quyền hàng loạt</span>
+                            <span class="feat-badge badge-indigo">Hàng loạt</span>
+                        </div>
+                        <div class="feat-desc">Cấp quyền thư mục/ngân hàng nhanh chóng</div>
+                    </div>
+                    <span class="feat-arrow">›</span>
+                </button>
+
+                <!-- 7. Nhân bản câu hỏi -->
+                <button id="openQuestionDuplicator" class="feat-btn" data-category="ops"
+                    data-keywords="nhan ban duplicate clone sao chep cau hoi">
+                    <div class="feat-icon-box icon-amber">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <div class="feat-content">
+                        <div class="feat-title-row">
+                            <span class="feat-label">Nhân bản câu hỏi</span>
+                            <span class="feat-badge badge-orange">Clone</span>
+                        </div>
+                        <div class="feat-desc">Sao chép nhanh câu hỏi sang ngân hàng khác</div>
+                    </div>
+                    <span class="feat-arrow">›</span>
+                </button>
+
+                <!-- 8. Di chuyển câu hỏi -->
+                <button id="openQuestionMover" class="feat-btn" data-category="ops"
+                    data-keywords="di chuyen move transfer chuyen folder cau hoi">
+                    <div class="feat-icon-box icon-amber">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                    </div>
+                    <div class="feat-content">
+                        <div class="feat-title-row">
+                            <span class="feat-label">Di chuyển câu hỏi</span>
+                            <span class="feat-badge badge-orange">Move</span>
+                        </div>
+                        <div class="feat-desc">Chuyển hàng loạt câu hỏi giữa các ngân hàng</div>
+                    </div>
+                    <span class="feat-arrow">›</span>
+                </button>
+
+                <!-- 9. Xóa câu hỏi hàng loạt -->
+                <button id="openQuestionDeleter" class="feat-btn" data-category="ops"
+                    data-keywords="xoa cau hoi hang loat delete remove danger">
+                    <div class="feat-icon-box icon-danger">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </div>
+                    <div class="feat-content">
+                        <div class="feat-title-row">
+                            <span class="feat-label">Xóa câu hỏi</span>
+                            <span class="feat-badge badge-red">Hàng loạt</span>
+                        </div>
+                        <div class="feat-desc">Xóa nhanh nhiều câu hỏi theo danh sách ID</div>
+                    </div>
+                    <span class="feat-arrow">›</span>
+                </button>
+
+            </div>
+        </div>
+
+        <!-- ── NHÓM 3: Tra cứu & Tiện ích ── -->
+        <div class="group-section" data-group="tools">
+            <div class="group-header">
+                <span>🔍 Tra cứu & Tiện ích</span>
+            </div>
+            <div class="flex flex-col gap-1.5">
+
+                <!-- 10. Xem câu hỏi trong phiếu -->
+                <button id="openSidePanel" class="feat-btn" data-category="tools"
+                    data-keywords="xem cau hoi trong phieu de thi sidepanel panel xem nhanh">
+                    <div class="feat-icon-box icon-view">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                        </svg>
+                    </div>
+                    <div class="feat-content">
+                        <div class="feat-title-row">
+                            <span class="feat-label">Xem câu hỏi trong phiếu</span>
+                            <span class="feat-badge badge-blue">SidePanel</span>
+                        </div>
+                        <div class="feat-desc">Mở bảng bên cạnh hiển thị câu hỏi bài thi</div>
+                    </div>
+                    <span class="feat-arrow">›</span>
+                </button>
+
+                <!-- 11. Tìm câu hỏi -->
+                <button id="openQuestionFinder" class="feat-btn" data-category="tools"
+                    data-keywords="tim cau hoi search find tra cuu kiem tra">
+                    <div class="feat-icon-box icon-view">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <div class="feat-content">
+                        <div class="feat-title-row">
+                            <span class="feat-label">Tìm câu hỏi</span>
+                            <span class="feat-badge badge-blue">Search</span>
+                        </div>
+                        <div class="feat-desc">Tìm kiếm câu hỏi theo nội dung hoặc ID</div>
+                    </div>
+                    <span class="feat-arrow">›</span>
+                </button>
+
+                <!-- 12. Tra cứu IID ngân hàng -->
+                <button id="openBankIidViewer" class="feat-btn" data-category="tools"
+                    data-keywords="tra cuu iid ngan hang bank id code viewer">
+                    <div class="feat-icon-box icon-view">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                        </svg>
+                    </div>
+                    <div class="feat-content">
+                        <div class="feat-title-row">
+                            <span class="feat-label">Tra cứu IID ngân hàng</span>
+                            <span class="feat-badge badge-blue">IID</span>
+                        </div>
+                        <div class="feat-desc">Xem danh sách mã định danh IID các ngân hàng</div>
+                    </div>
+                    <span class="feat-arrow">›</span>
+                </button>
+
+            </div>
+        </div>
+
+        <!-- Empty state khi tìm kiếm không ra -->
+        <div id="noResultsMsg" class="empty-search hidden">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-xs font-medium">Không tìm thấy chức năng phù hợp</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Thử từ khóa khác như "thẻ", "xóa", "excel"...</p>
+        </div>
 
     </div>
 
-    <!-- ── Section Divider: Cài đặt ── -->
-    <div class="section-divider" style="margin-top: 12px;">
-        <span class="text-xs text-gray-300 font-medium">Cài đặt</span>
-    </div>
-
-    <!-- ── Settings ── -->
-    <div class="flex flex-col gap-1.5">
+    <!-- ── Settings Footer ── -->
+    <div class="mt-3 pt-2.5 border-t border-slate-200">
         <div class="setting-row">
             <label class="setting-label" for="toggleBankIidOverlay">
-                Hiển thị IID ngân hàng trên trang
-                <small>Tự động hiện badge IID khi vào trang thư mục ngân hàng</small>
+                Hiển thị IID ngân hàng trên web
+                <small>Tự động hiện badge IID khi vào thư mục LotusLMS</small>
             </label>
             <label class="toggle-switch">
                 <input type="checkbox" id="toggleBankIidOverlay" checked>

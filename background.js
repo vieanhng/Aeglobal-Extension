@@ -181,65 +181,126 @@ const updateQuestionTags = async (questionObject, tags, mode = 'append', uid, to
     console.log(`Đang xử lý tags (chế độ: ${mode}) cho ID: ${qId}`);
 
     try {
-        const inputTags = (Array.isArray(tags) ? tags : [tags])
-            .map(t => typeof t === 'string' ? t.trim() : String(t).trim())
-            .filter(t => t.length > 0);
-
-        const currentTags = Array.isArray(questionObject.tags) ? [...questionObject.tags] : [];
         let finalTags = [];
 
-        if (mode === 'append') {
-            // Hợp nhất tags hiện có và tags mới, loại bỏ trùng lặp
-            finalTags = [...new Set([...currentTags, ...inputTags])];
-        } else if (mode === 'replace') {
-            // Thay thế toàn bộ bằng danh sách tags mới
-            finalTags = [...new Set(inputTags)];
-        } else if (mode === 'remove') {
-            // Kiểm tra xem có tag nào cần xóa nằm trong currentTags không
-            const tagsToRemoveSet = new Set(inputTags.map(t => t.toLowerCase()));
-            const matchedTags = currentTags.filter(t => tagsToRemoveSet.has(t.toLowerCase()));
-
-            if (matchedTags.length === 0) {
-                console.log(`ID ${qId} không chứa bất kỳ thẻ nào cần xóa. Bỏ qua cập nhật.`);
-                return {
-                    success: true,
-                    skipped: true,
-                    message: "Không chứa thẻ cần xóa",
-                    oldTags: currentTags,
-                    finalTags: currentTags
-                };
-            }
-
-            // Loại bỏ các tags cần xóa
-            finalTags = currentTags.filter(t => !tagsToRemoveSet.has(t.toLowerCase()));
-        } else if (mode === 'overwrite') {
-            // Ghi đè thẻ A bằng thẻ B, giữ nguyên các thẻ khác của câu hỏi
-            let fromTags = [];
-            let toTags = [];
+        if (mode === 'overwrite') {
+            let cleanPairs = [];
             if (tags && typeof tags === 'object' && !Array.isArray(tags)) {
-                fromTags = (Array.isArray(tags.from) ? tags.from : [tags.from || '']).map(t => String(t).trim()).filter(t => t.length > 0);
-                toTags = (Array.isArray(tags.to) ? tags.to : [tags.to || '']).map(t => String(t).trim()).filter(t => t.length > 0);
+                if (Array.isArray(tags.pairs)) {
+                    cleanPairs = tags.pairs
+                        .map(p => ({
+                            from: String(p.from || '').trim(),
+                            to: String(p.to || '').trim()
+                        }))
+                        .filter(p => p.from.length > 0);
+                } else if (tags.from !== undefined) {
+                    const fromArr = (Array.isArray(tags.from) ? tags.from : [tags.from])
+                        .map(t => String(t).trim())
+                    const toArr = (Array.isArray(tags.to) ? tags.to : [tags.to])
+                        .map(t => String(t).trim());
+                    fromArr.forEach((fromTag, idx) => {
+                        cleanPairs.push({ from: fromTag, to: toArr[idx] || toArr[0] || '' });
+                    });
+                }
             }
 
-            const fromSet = new Set(fromTags.map(t => t.toLowerCase()));
-            const matchedTags = currentTags.filter(t => fromSet.has(t.toLowerCase()));
+            const replacementMap = new Map();
+            for (const pair of cleanPairs) {
+                if (!replacementMap.has(pair.from)) {
+                    replacementMap.set(pair.from, pair.to);
+                }
+            }
 
-            if (matchedTags.length === 0) {
-                console.log(`ID ${qId} không chứa thẻ [${fromTags.join(', ')}] để ghi đè. Bỏ qua.`);
+            const appliedChanges = [];
+            const matchedFromTags = new Set();
+            for (const tag of currentTags) {
+                if (replacementMap.has(tag)) {
+                    matchedFromTags.add(tag);
+                    const toVal = replacementMap.get(tag);
+                    const changeStr = `[${tag}] ➔ [${toVal || '(xóa)'}]`;
+                    if (!appliedChanges.includes(changeStr)) {
+                        appliedChanges.push(changeStr);
+                    }
+                }
+            }
+
+            if (matchedFromTags.size === 0) {
+                const fromListNames = cleanPairs.map(p => p.from);
+                console.log(`ID ${qId} không chứa thẻ nào khớp trong danh sách [${fromListNames.join(', ')}]. Bỏ qua.`);
                 return {
                     success: true,
                     skipped: true,
-                    message: `Không chứa thẻ [${fromTags.join(', ')}] để ghi đè`,
+                    message: `Không chứa thẻ nào khớp trong danh sách [${fromListNames.join(', ')}] để ghi đè`,
                     oldTags: currentTags,
                     finalTags: currentTags
                 };
             }
 
-            // Giữ nguyên các thẻ khác, thay thế các thẻ A bằng thẻ B
-            const remainingTags = currentTags.filter(t => !fromSet.has(t.toLowerCase()));
-            finalTags = [...new Set([...remainingTags, ...toTags])];
+            // Thay thế vị trí các thẻ A bằng thẻ B tương ứng
+            let newTagsList = [];
+            for (const tag of currentTags) {
+                if (replacementMap.has(tag)) {
+                    const toVal = replacementMap.get(tag);
+                    if (toVal && toVal.length > 0) {
+                        const subTags = toVal.split(/[\n,]+/).map(t => t.trim()).filter(t => t.length > 0);
+                        newTagsList.push(...subTags);
+                    }
+                } else {
+                    newTagsList.push(tag);
+                }
+            }
+
+            const seen = new Set();
+            finalTags = [];
+            for (const t of newTagsList) {
+                if (!seen.has(t) && t.length > 0) {
+                    seen.add(t);
+                    finalTags.push(t);
+                }
+            }
         } else {
-            finalTags = [...new Set([...currentTags, ...inputTags])];
+            let inputTags = [];
+            if (Array.isArray(tags)) {
+                inputTags = tags.map(t => String(t).trim()).filter(t => t.length > 0);
+            } else if (typeof tags === 'string') {
+                inputTags = [tags.trim()].filter(t => t.length > 0);
+            }
+
+            if (mode === 'append') {
+                const seen = new Set();
+                finalTags = [];
+                for (const t of [...currentTags, ...inputTags]) {
+                    if (!seen.has(t) && t.length > 0) {
+                        seen.add(t);
+                        finalTags.push(t);
+                    }
+                }
+            } else if (mode === 'replace') {
+                const seen = new Set();
+                finalTags = [];
+                for (const t of inputTags) {
+                    if (!seen.has(t) && t.length > 0) {
+                        seen.add(t);
+                        finalTags.push(t);
+                    }
+                }
+            } else if (mode === 'remove') {
+                const tagsToRemoveSet = new Set(inputTags);
+                const matchedTags = currentTags.filter(t => tagsToRemoveSet.has(t));
+
+                if (matchedTags.length === 0) {
+                    console.log(`ID ${qId} không chứa bất kỳ thẻ nào cần xóa. Bỏ qua cập nhật.`);
+                    return {
+                        success: true,
+                        skipped: true,
+                        message: "Không chứa thẻ cần xóa",
+                        oldTags: currentTags,
+                        finalTags: currentTags
+                    };
+                }
+
+                finalTags = currentTags.filter(t => !tagsToRemoveSet.has(t));
+            }
         }
 
         // --- GỬI REQUEST CẬP NHẬT ---

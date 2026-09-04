@@ -9,14 +9,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateAuthInfoBtn = document.getElementById('updateAuthInfoBtn');
     const clearAuthInfoBtn = document.getElementById('clearAuthInfoBtn');
 
+    const authSummaryRow = document.getElementById('authSummaryRow');
+    const authDetailsContainer = document.getElementById('authDetailsContainer');
+    const authToggleIcon = document.getElementById('authToggleIcon');
+    const toggleAuthDetailBtn = document.getElementById('toggleAuthDetailBtn');
+
     const loginPromptSection = document.getElementById('loginPromptSection');
     const getAuthInfoBtn = document.getElementById('getAuthInfoBtn');
     const statusMessage = document.getElementById('statusMessage');
 
-    // Các nút chức năng
+    const displayUidDetail = document.getElementById('displayUidDetail');
+    const copyUidCompactBtn = document.getElementById('copyUidCompactBtn');
+    const copyUidBtn = document.getElementById('copyUidBtn');
+    const copyTokenBtn = document.getElementById('copyTokenBtn');
 
-    // const openAnotherFeatureBtn = document.getElementById('openAnotherFeature'); // Cho chức năng mở rộng sau này
+    // Toggle expand/collapse chi tiết auth
+    function toggleAuthDetails() {
+        if (!authDetailsContainer) return;
+        const isHidden = authDetailsContainer.classList.contains('hidden');
+        if (isHidden) {
+            authDetailsContainer.classList.remove('hidden');
+            if (authToggleIcon) authToggleIcon.textContent = '▴';
+        } else {
+            authDetailsContainer.classList.add('hidden');
+            if (authToggleIcon) authToggleIcon.textContent = '▾';
+        }
+    }
 
+    if (authSummaryRow) {
+        authSummaryRow.addEventListener('click', toggleAuthDetails);
+    }
+    if (toggleAuthDetailBtn) {
+        toggleAuthDetailBtn.addEventListener('click', toggleAuthDetails);
+    }
 
     // Hàm để cố gắng lấy token và iid từ localStorage của trang đích
     async function getAuthDataFromTargetSite() {
@@ -55,7 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     );
                 } else {
-                    // Nếu không ở đúng trang đích, không thể tự động lấy
                     resolve(null);
                 }
             });
@@ -65,6 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Hàm hiển thị phần thông tin đã lưu
     function showSavedAuthInfo(uid, token, date) {
         displayUid.textContent = uid;
+        if (displayUidDetail) displayUidDetail.textContent = uid;
         displayToken.textContent = token;
         savedDate.textContent = new Date(date).toLocaleString();
         savedInfoDisplay.classList.remove('hidden');
@@ -91,30 +116,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Hàm tự động lấy auth khi mở popup
     async function autoFetchAuthOnOpen() {
-        // Kiểm tra xem có đang ở trang LotusLMS không
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         const activeTab = tabs[0];
 
         if (activeTab && (activeTab.url.startsWith("https://aeglobal.lotuslms.com/") ||
             activeTab.url.startsWith("https://aeglobal2.lotuslms.com/"))) {
 
-            // Hiển thị thông báo đang tự động lấy
             statusMessage.textContent = "🔄 Đang tự động lấy thông tin xác thực...";
-            statusMessage.className = "mt-3 text-sm text-center text-blue-600";
+            statusMessage.className = "mt-1.5 text-xs text-center text-blue-600";
 
             const authData = await getAuthDataFromTargetSite();
 
             if (authData && authData.token && authData.iid) {
                 const currentTimestamp = Date.now();
 
-                // Kiểm tra xem có cần cập nhật không (so sánh với dữ liệu hiện tại)
                 const existingData = await chrome.storage.local.get(['uid', 'token']);
                 const needsUpdate = !existingData.uid || !existingData.token ||
                     existingData.uid !== authData.iid ||
                     existingData.token !== authData.token;
 
                 if (needsUpdate) {
-                    // Lưu thông tin mới
                     chrome.runtime.sendMessage({
                         action: "setAuthData",
                         uid: authData.iid,
@@ -122,22 +143,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         savedDate: currentTimestamp
                     }, (response) => {
                         if (response && response.status === "success") {
-                            statusMessage.textContent = "✅ Đã tự động cập nhật thông tin xác thực!";
-                            statusMessage.className = "mt-3 text-sm text-center text-green-600";
+                            statusMessage.textContent = "✅ Đã tự động cập nhật thông tin!";
+                            statusMessage.className = "mt-1.5 text-xs text-center text-green-600";
                             showSavedAuthInfo(authData.iid, authData.token, currentTimestamp);
 
-                            // Ẩn thông báo sau 3 giây
                             setTimeout(() => {
                                 statusMessage.textContent = "";
-                            }, 3000);
+                            }, 2500);
                         }
                     });
                 } else {
-                    // Thông tin đã cập nhật, chỉ cần ẩn thông báo
                     statusMessage.textContent = "";
                 }
             } else {
-                // Không lấy được auth, ẩn thông báo
                 statusMessage.textContent = "";
             }
         }
@@ -150,107 +168,152 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.storage.local.get(['uid', 'token', 'savedDate'], async (data) => {
         const { uid, token, savedDate } = data;
         const now = new Date();
-        const oneDay = 24 * 60 * 60 * 1000; // Một ngày tính bằng milliseconds
+        const oneDay = 24 * 60 * 60 * 1000;
 
         if (savedDate) {
             const storedDate = new Date(savedDate);
             if (now.getTime() - storedDate.getTime() > oneDay) {
-                // Nếu dữ liệu đã cũ hơn một ngày, xóa nó
-                console.log("Dữ liệu xác thực đã quá một ngày. Đang xóa...");
                 chrome.storage.local.remove(['uid', 'token', 'savedDate'], () => {
                     showLoginPrompt();
-                    statusMessage.textContent = "Thông tin xác thực đã hết hạn (quá 1 ngày) và đã được xóa. Vui lòng cập nhật lại.";
-                    statusMessage.className = "mt-3 text-sm text-center text-orange-600";
-
-                    // Thử tự động lấy lại auth
+                    statusMessage.textContent = "Thông tin xác thực đã hết hạn (quá 1 ngày). Vui lòng lấy lại.";
+                    statusMessage.className = "mt-1.5 text-xs text-center text-orange-600";
                     autoFetchAuthOnOpen();
                 });
-                return; // Dừng lại không hiển thị dữ liệu cũ
+                return;
             }
         }
 
         if (uid && token) {
             showSavedAuthInfo(uid, token, savedDate);
-            // Tự động cập nhật auth nếu đang ở trang LotusLMS
             autoFetchAuthOnOpen();
         } else {
             showLoginPrompt();
-            // Thử tự động lấy auth nếu chưa có
             autoFetchAuthOnOpen();
         }
     });
 
     // Nút "Lấy thông tin từ trang web"
     getAuthInfoBtn.addEventListener('click', async () => {
-        statusMessage.textContent = "Đang cố gắng lấy thông tin từ trang web...";
-        statusMessage.className = "mt-3 text-sm text-center text-blue-600";
+        statusMessage.textContent = "Đang lấy thông tin từ LotusLMS...";
+        statusMessage.className = "mt-1.5 text-xs text-center text-blue-600";
         const authData = await getAuthDataFromTargetSite();
         if (authData && authData.token && authData.iid) {
             const currentTimestamp = Date.now();
-            // Gửi UID, Token và thời gian lưu đến background script để lưu
             chrome.runtime.sendMessage({ action: "setAuthData", uid: authData.iid, token: authData.token, savedDate: currentTimestamp }, (response) => {
                 if (response && response.status === "success") {
-                    statusMessage.textContent = "Đã lấy và lưu thông tin thành công!";
-                    statusMessage.className = "mt-3 text-sm text-center text-green-600";
+                    statusMessage.textContent = "✅ Đã lấy và lưu thông tin thành công!";
+                    statusMessage.className = "mt-1.5 text-xs text-center text-green-600";
                     showSavedAuthInfo(authData.iid, authData.token, currentTimestamp);
+                    setTimeout(() => { statusMessage.textContent = ""; }, 2500);
                 } else {
-                    statusMessage.textContent = "Lỗi khi lưu thông tin.";
-                    statusMessage.className = "mt-3 text-sm text-center text-red-600";
+                    statusMessage.textContent = "❌ Lỗi khi lưu thông tin.";
+                    statusMessage.className = "mt-1.5 text-xs text-center text-red-600";
                 }
             });
         } else {
-            statusMessage.textContent = "Không thể tự động lấy thông tin. Vui lòng đảm bảo bạn đang ở trang lotuslms và đã đăng nhập.";
-            statusMessage.className = "mt-3 text-sm text-center text-orange-600";
+            statusMessage.textContent = "Không thể lấy thông tin. Hãy đảm bảo bạn đã mở và đăng nhập LotusLMS.";
+            statusMessage.className = "mt-1.5 text-xs text-center text-orange-600";
         }
     });
 
-    // Nút "Cập nhật" (cho phép cập nhật thủ công nếu cần)
+    // Nút "Cập nhật"
     updateAuthInfoBtn.addEventListener('click', async () => {
-        statusMessage.textContent = "Đang cố gắng cập nhật thông tin từ trang web...";
-        statusMessage.className = "mt-3 text-sm text-center text-blue-600";
+        statusMessage.textContent = "Đang cập nhật từ LotusLMS...";
+        statusMessage.className = "mt-1.5 text-xs text-center text-blue-600";
         const authData = await getAuthDataFromTargetSite();
         if (authData && authData.token && authData.iid) {
             const currentTimestamp = Date.now();
             chrome.runtime.sendMessage({ action: "setAuthData", uid: authData.iid, token: authData.token, savedDate: currentTimestamp }, (response) => {
                 if (response && response.status === "success") {
-                    statusMessage.textContent = "Thông tin đã được cập nhật!";
-                    statusMessage.className = "mt-3 text-sm text-center text-green-600";
+                    statusMessage.textContent = "✅ Thông tin đã được cập nhật!";
+                    statusMessage.className = "mt-1.5 text-xs text-center text-green-600";
                     showSavedAuthInfo(authData.iid, authData.token, currentTimestamp);
+                    setTimeout(() => { statusMessage.textContent = ""; }, 2500);
                 } else {
-                    statusMessage.textContent = "Lỗi khi cập nhật thông tin.";
-                    statusMessage.className = "mt-3 text-sm text-center text-red-600";
+                    statusMessage.textContent = "❌ Lỗi khi cập nhật thông tin.";
+                    statusMessage.className = "mt-1.5 text-xs text-center text-red-600";
                 }
             });
         } else {
-            statusMessage.textContent = "Không thể cập nhật. Vui lòng đảm bảo bạn đang ở trang lotuslms và đã đăng nhập.";
-            statusMessage.className = "mt-3 text-sm text-center text-orange-600";
+            statusMessage.textContent = "Không thể cập nhật. Hãy đảm bảo bạn đã mở và đăng nhập LotusLMS.";
+            statusMessage.className = "mt-1.5 text-xs text-center text-orange-600";
         }
     });
 
     // Nút "Xóa"
     clearAuthInfoBtn.addEventListener('click', () => {
         chrome.storage.local.remove(['uid', 'token', 'savedDate'], () => {
-            statusMessage.textContent = "Thông tin đã được xóa.";
-            statusMessage.className = "mt-3 text-sm text-center text-blue-600";
+            statusMessage.textContent = "Đã xóa thông tin xác thực.";
+            statusMessage.className = "mt-1.5 text-xs text-center text-blue-600";
             showLoginPrompt();
+            setTimeout(() => { statusMessage.textContent = ""; }, 2500);
         });
     });
 
-    // Xem câu hỏi trong phiếu"
-    const openSidePanelBtn = document.getElementById('openSidePanel');
-    openSidePanelBtn.addEventListener('click', () => {
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            if (tabs[0]) {
-                chrome.sidePanel.open({ tabId: tabs[0].id });
-                window.close();
+    // ── Hàm sao chép vào Clipboard ──
+    function copyToClipboard(text, successMsg, button) {
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => {
+            const originalHtml = button ? button.innerHTML : null;
+            if (button) {
+                button.innerHTML = '✅ Đã copy!';
+                setTimeout(() => {
+                    if (originalHtml) button.innerHTML = originalHtml;
+                }, 1500);
             }
+            if (statusMessage) {
+                statusMessage.textContent = successMsg;
+                statusMessage.className = "mt-1.5 text-xs text-center text-green-600";
+                setTimeout(() => {
+                    statusMessage.textContent = "";
+                }, 2000);
+            }
+        }).catch(err => {
+            console.error('Không thể copy:', err);
         });
-    });
+    }
+
+    if (copyUidCompactBtn) {
+        copyUidCompactBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            copyToClipboard(displayUid.textContent, '✅ Đã sao chép UID!', copyUidCompactBtn);
+        });
+    }
+
+    if (copyUidBtn) {
+        copyUidBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            copyToClipboard(displayUid.textContent, '✅ Đã sao chép UID!', copyUidBtn);
+        });
+    }
+
+    if (copyTokenBtn) {
+        copyTokenBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            copyToClipboard(displayToken.textContent, '✅ Đã sao chép Token!', copyTokenBtn);
+        });
+    }
+
+    // ── Nút chức năng ──
+    // Xem câu hỏi trong phiếu (SidePanel)
+    const openSidePanelBtn = document.getElementById('openSidePanel');
+    if (openSidePanelBtn) {
+        openSidePanelBtn.addEventListener('click', () => {
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                if (tabs[0]) {
+                    chrome.sidePanel.open({ tabId: tabs[0].id });
+                    window.close();
+                }
+            });
+        });
+    }
 
     const openLotusExtractorBtn = document.getElementById('openLotusExtractor');
-    openLotusExtractorBtn.addEventListener('click', () => {
-        window.open(chrome.runtime.getURL('module/question-folder-extractor/index.html'));
-    });
+    if (openLotusExtractorBtn) {
+        openLotusExtractorBtn.addEventListener('click', () => {
+            window.open(chrome.runtime.getURL('module/question-folder-extractor/index.html'));
+        });
+    }
 
     const openFolderStructureExporterBtn = document.getElementById('openFolderStructureExporter');
     if (openFolderStructureExporterBtn) {
@@ -260,25 +323,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const openSyllabusExtractorBtn = document.getElementById('openSyllabusExtractor');
-    openSyllabusExtractorBtn.addEventListener('click', () => {
-        window.open(chrome.runtime.getURL('module/question-syllabus-extractor/index.html'));
-    });
+    if (openSyllabusExtractorBtn) {
+        openSyllabusExtractorBtn.addEventListener('click', () => {
+            window.open(chrome.runtime.getURL('module/question-syllabus-extractor/index.html'));
+        });
+    }
 
-    // Event Listeners cho các nút chức năng chính
     const openQuestionDuplicatorBtn = document.getElementById('openQuestionDuplicator');
-    openQuestionDuplicatorBtn.addEventListener('click', () => {
-        window.open(chrome.runtime.getURL('module/question-duplicator/index.html'));
-    });
+    if (openQuestionDuplicatorBtn) {
+        openQuestionDuplicatorBtn.addEventListener('click', () => {
+            window.open(chrome.runtime.getURL('module/question-duplicator/index.html'));
+        });
+    }
 
     const openQuestionMover = document.getElementById('openQuestionMover');
-    openQuestionMover.addEventListener('click', () => {
-        window.open(chrome.runtime.getURL('module/question-move/index.html'));
-    });
+    if (openQuestionMover) {
+        openQuestionMover.addEventListener('click', () => {
+            window.open(chrome.runtime.getURL('module/question-move/index.html'));
+        });
+    }
 
     const openQuestionDeleter = document.getElementById('openQuestionDeleter');
-    openQuestionDeleter.addEventListener('click', () => {
-        window.open(chrome.runtime.getURL('module/question-deleter/index.html'));
-    });
+    if (openQuestionDeleter) {
+        openQuestionDeleter.addEventListener('click', () => {
+            window.open(chrome.runtime.getURL('module/question-deleter/index.html'));
+        });
+    }
 
     const openQuestionTagger = document.getElementById('openQuestionTagger');
     if (openQuestionTagger) {
@@ -288,44 +358,151 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const openPhanQuyen = document.getElementById('openPhanQuyen');
-    openPhanQuyen.addEventListener('click', () => {
-        window.open(chrome.runtime.getURL('module/phanquyen/index.html'));
-    });
+    if (openPhanQuyen) {
+        openPhanQuyen.addEventListener('click', () => {
+            window.open(chrome.runtime.getURL('module/phanquyen/index.html'));
+        });
+    }
 
     const openQuestionFinder = document.getElementById('openQuestionFinder');
-    openQuestionFinder.addEventListener('click', () => {
-        window.open(chrome.runtime.getURL('module/question-finder/index.html'));
-    });
+    if (openQuestionFinder) {
+        openQuestionFinder.addEventListener('click', () => {
+            window.open(chrome.runtime.getURL('module/question-finder/index.html'));
+        });
+    }
 
     const openQuestionExporter = document.getElementById('openQuestionExporter');
-    openQuestionExporter.addEventListener('click', () => {
-        window.open(chrome.runtime.getURL('module/question-exporter/index.html'));
-    });
+    if (openQuestionExporter) {
+        openQuestionExporter.addEventListener('click', () => {
+            window.open(chrome.runtime.getURL('module/question-exporter/index.html'));
+        });
+    }
 
     const openBankIidViewer = document.getElementById('openBankIidViewer');
-    openBankIidViewer.addEventListener('click', () => {
-        window.open(chrome.runtime.getURL('module/bank-iid-viewer/index.html'));
-    });
+    if (openBankIidViewer) {
+        openBankIidViewer.addEventListener('click', () => {
+            window.open(chrome.runtime.getURL('module/bank-iid-viewer/index.html'));
+        });
+    }
 
     // ── Cài đặt: Toggle hiển thị IID ngân hàng trên trang ────────
     const toggleBankIidOverlay = document.getElementById('toggleBankIidOverlay');
+    if (toggleBankIidOverlay) {
+        chrome.storage.local.get({ showBankIidOverlay: true }, (data) => {
+            toggleBankIidOverlay.checked = data.showBankIidOverlay;
+        });
 
-    // Đọc giá trị hiện tại từ storage (mặc định: bật)
-    chrome.storage.local.get({ showBankIidOverlay: true }, (data) => {
-        toggleBankIidOverlay.checked = data.showBankIidOverlay;
+        toggleBankIidOverlay.addEventListener('change', () => {
+            chrome.storage.local.set({ showBankIidOverlay: toggleBankIidOverlay.checked });
+        });
+    }
+
+    // ── Bộ lọc Tab & Tìm kiếm chức năng ──
+    const categoryTabs = document.querySelectorAll('#categoryTabs .tab-btn');
+    const groupSections = document.querySelectorAll('.group-section');
+    const noResultsMsg = document.getElementById('noResultsMsg');
+    const searchInput = document.getElementById('featSearchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+
+    let currentCategory = 'all';
+
+    function normalizeText(text) {
+        return (text || '')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/đ/g, 'd')
+            .replace(/Đ/g, 'd')
+            .trim();
+    }
+
+    function filterFeatures() {
+        const rawQuery = (searchInput?.value || '').trim();
+        const normQuery = normalizeText(rawQuery);
+        let visibleTotal = 0;
+
+        groupSections.forEach(section => {
+            const groupCategory = section.getAttribute('data-group');
+            let groupHasVisible = false;
+
+            const buttons = section.querySelectorAll('.feat-btn');
+            buttons.forEach(btn => {
+                const btnCategory = btn.getAttribute('data-category');
+                const title = btn.querySelector('.feat-label')?.textContent || '';
+                const desc = btn.querySelector('.feat-desc')?.textContent || '';
+                const keywords = btn.getAttribute('data-keywords') || '';
+
+                const normTarget = normalizeText(`${title} ${desc} ${keywords}`);
+
+                const matchesCategory = (currentCategory === 'all') || (btnCategory === currentCategory);
+                const matchesSearch = !normQuery || normTarget.includes(normQuery);
+
+                if (matchesCategory && matchesSearch) {
+                    btn.classList.remove('hidden');
+                    groupHasVisible = true;
+                    visibleTotal++;
+                } else {
+                    btn.classList.add('hidden');
+                }
+            });
+
+            // Ẩn hoặc hiện tiêu đề nhóm
+            if (groupHasVisible) {
+                section.classList.remove('hidden');
+            } else {
+                section.classList.add('hidden');
+            }
+        });
+
+        if (noResultsMsg) {
+            if (visibleTotal === 0) {
+                noResultsMsg.classList.remove('hidden');
+            } else {
+                noResultsMsg.classList.add('hidden');
+            }
+        }
+    }
+
+    categoryTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            categoryTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            currentCategory = tab.getAttribute('data-category') || 'all';
+            filterFeatures();
+        });
     });
 
-    // Lưu khi thay đổi
-    toggleBankIidOverlay.addEventListener('change', () => {
-        chrome.storage.local.set({ showBankIidOverlay: toggleBankIidOverlay.checked });
-    });
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            if (clearSearchBtn) {
+                clearSearchBtn.style.display = searchInput.value ? 'block' : 'none';
+            }
+            filterFeatures();
+        });
 
-    // Thêm event listener cho các chức năng mở rộng khác tại đây sau này
-    // if (openAnotherFeatureBtn) {
-    //     openAnotherFeatureBtn.addEventListener('click', () => {
-    //         // Ví dụ: mở một trang HTML khác hoặc thực hiện một hành động khác
-    //         // window.open(chrome.runtime.getURL('another_feature.html'));
-    //         alert('Chức năng này đang được phát triển!');
-    //     });
-    // }
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                searchInput.value = '';
+                if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+                filterFeatures();
+            } else if (e.key === 'Enter') {
+                // Mở chức năng đầu tiên hiển thị
+                const firstVisible = document.querySelector('.feat-btn:not(.hidden)');
+                if (firstVisible) {
+                    firstVisible.click();
+                }
+            }
+        });
+    }
+
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', () => {
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.focus();
+            }
+            clearSearchBtn.style.display = 'none';
+            filterFeatures();
+        });
+    }
 });

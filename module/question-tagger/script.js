@@ -1,66 +1,72 @@
 // Question Tagger - Quản lý thẻ câu hỏi hàng loạt (Append, Remove, Replace)
 document.addEventListener('DOMContentLoaded', () => {
     // ── DOM Elements ──────────────────────────────────────────
-    const displayUid         = document.getElementById('displayUid');
-    const displayToken       = document.getElementById('displayToken');
-    const displaySavedDate   = document.getElementById('displaySavedDate');
-    const statusResultDiv    = document.getElementById('statusResult');
-    const messageP           = document.getElementById('message');
+    const displayUid = document.getElementById('displayUid');
+    const displayToken = document.getElementById('displayToken');
+    const displaySavedDate = document.getElementById('displaySavedDate');
+    const statusResultDiv = document.getElementById('statusResult');
+    const messageP = document.getElementById('message');
 
     // Inputs
-    const questionIdsInput   = document.getElementById('question-ids');
-    const questionCount      = document.getElementById('questionCount');
-    const clearIdsBtn        = document.getElementById('clearIdsBtn');
-    const tagInput           = document.getElementById('tagInput');
-    const tagsInputLabel     = document.getElementById('tagsInputLabel');
-    const tagCountBadge      = document.getElementById('tagCountBadge');
-    const tagHelperText      = document.getElementById('tagHelperText');
+    const questionIdsInput = document.getElementById('question-ids');
+    const questionCount = document.getElementById('questionCount');
+    const clearIdsBtn = document.getElementById('clearIdsBtn');
+    const tagInput = document.getElementById('tagInput');
+    const tagsInputLabel = document.getElementById('tagsInputLabel');
+    const tagCountBadge = document.getElementById('tagCountBadge');
+    const tagHelperText = document.getElementById('tagHelperText');
     const tagsPreviewContainer = document.getElementById('tagsPreviewContainer');
-    const tagsPreviewList    = document.getElementById('tagsPreviewList');
-    const batchSizeInput     = document.getElementById('batchSize');
-    const delayMsInput       = document.getElementById('delayMs');
+    const tagsPreviewList = document.getElementById('tagsPreviewList');
+    const batchSizeInput = document.getElementById('batchSize');
+    const delayMsInput = document.getElementById('delayMs');
 
-    // Input Containers for Overwrite Mode
-    const standardTagInputContainer  = document.getElementById('standardTagInputContainer');
+    // Input Containers for Overwrite Mode (Multiple A -> B pairs)
+    const standardTagInputContainer = document.getElementById('standardTagInputContainer');
     const overwriteTagInputContainer = document.getElementById('overwriteTagInputContainer');
-    const tagInputFrom               = document.getElementById('tagInputFrom');
-    const tagInputTo                 = document.getElementById('tagInputTo');
+    const pairsListModeContainer = document.getElementById('pairsListModeContainer');
+    const pairsListContainer = document.getElementById('pairsListContainer');
+    const addPairRowBtn = document.getElementById('addPairRowBtn');
+    const pairCountBadge = document.getElementById('pairCountBadge');
+    const toggleBulkPairModeBtn = document.getElementById('toggleBulkPairModeBtn');
+    const bulkTextareaModeContainer = document.getElementById('bulkTextareaModeContainer');
+    const bulkPairsTextarea = document.getElementById('bulkPairsTextarea');
+    const applyBulkPairsBtn = document.getElementById('applyBulkPairsBtn');
 
     // Mode Radios & Cards
-    const modeRadios         = document.querySelectorAll('input[name="tagMode"]');
-    const modeCardAppend     = document.getElementById('modeCardAppend');
-    const modeCardRemove     = document.getElementById('modeCardRemove');
-    const modeCardOverwrite  = document.getElementById('modeCardOverwrite');
-    const modeCardReplace    = document.getElementById('modeCardReplace');
+    const modeRadios = document.querySelectorAll('input[name="tagMode"]');
+    const modeCardAppend = document.getElementById('modeCardAppend');
+    const modeCardRemove = document.getElementById('modeCardRemove');
+    const modeCardOverwrite = document.getElementById('modeCardOverwrite');
+    const modeCardReplace = document.getElementById('modeCardReplace');
 
     // Buttons
-    const startProcessBtn    = document.getElementById('startProcessBtn');
-    const stopProcessBtn     = document.getElementById('stopProcessBtn');
-    const btnSpinner         = document.getElementById('btnSpinner');
-    const btnText            = document.getElementById('btnText');
+    const startProcessBtn = document.getElementById('startProcessBtn');
+    const stopProcessBtn = document.getElementById('stopProcessBtn');
+    const btnSpinner = document.getElementById('btnSpinner');
+    const btnText = document.getElementById('btnText');
 
     // Progress Card
-    const progressCard       = document.getElementById('progressCard');
-    const progressBar        = document.getElementById('progressBar');
-    const progressPercent    = document.getElementById('progressPercent');
+    const progressCard = document.getElementById('progressCard');
+    const progressBar = document.getElementById('progressBar');
+    const progressPercent = document.getElementById('progressPercent');
     const progressStatusText = document.getElementById('progressStatusText');
-    const statTotal          = document.getElementById('statTotal');
-    const statSuccess        = document.getElementById('statSuccess');
-    const statSkipped        = document.getElementById('statSkipped');
-    const statFailed         = document.getElementById('statFailed');
-    const statRemaining      = document.getElementById('statRemaining');
+    const statTotal = document.getElementById('statTotal');
+    const statSuccess = document.getElementById('statSuccess');
+    const statSkipped = document.getElementById('statSkipped');
+    const statFailed = document.getElementById('statFailed');
+    const statRemaining = document.getElementById('statRemaining');
 
     // Log Card
-    const logCard            = document.getElementById('logCard');
-    const logContainer       = document.getElementById('logContainer');
-    const clearLogBtn        = document.getElementById('clearLogBtn');
+    const logCard = document.getElementById('logCard');
+    const logContainer = document.getElementById('logContainer');
+    const clearLogBtn = document.getElementById('clearLogBtn');
 
     // Results Card
-    const resultsCard        = document.getElementById('resultsCard');
-    const resultsSummary     = document.getElementById('resultsSummary');
-    const resultsTableBody   = document.getElementById('resultsTableBody');
-    const copyFailedBtn      = document.getElementById('copyFailedBtn');
-    const exportCsvBtn       = document.getElementById('exportCsvBtn');
+    const resultsCard = document.getElementById('resultsCard');
+    const resultsSummary = document.getElementById('resultsSummary');
+    const resultsTableBody = document.getElementById('resultsTableBody');
+    const copyFailedBtn = document.getElementById('copyFailedBtn');
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
 
     // State Variables
     let currentUid = '';
@@ -84,6 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chrome.storage.local.get([
             'taggerQuestionIds',
             'taggerTagsInput',
+            'taggerPairs',
             'taggerTagFrom',
             'taggerTagTo',
             'taggerMode',
@@ -91,11 +98,17 @@ document.addEventListener('DOMContentLoaded', () => {
             'taggerDelayMs'
         ], (data) => {
             if (data.taggerQuestionIds) questionIdsInput.value = data.taggerQuestionIds;
-            if (data.taggerTagsInput)   tagInput.value = data.taggerTagsInput;
-            if (data.taggerTagFrom && tagInputFrom) tagInputFrom.value = data.taggerTagFrom;
-            if (data.taggerTagTo && tagInputTo)     tagInputTo.value = data.taggerTagTo;
-            if (data.taggerBatchSize)   batchSizeInput.value = data.taggerBatchSize;
-            if (data.taggerDelayMs)     delayMsInput.value = data.taggerDelayMs;
+            if (data.taggerTagsInput) tagInput.value = data.taggerTagsInput;
+            if (data.taggerBatchSize) batchSizeInput.value = data.taggerBatchSize;
+            if (data.taggerDelayMs) delayMsInput.value = data.taggerDelayMs;
+
+            if (Array.isArray(data.taggerPairs) && data.taggerPairs.length > 0) {
+                setPairsToUI(data.taggerPairs);
+            } else if (data.taggerTagFrom) {
+                setPairsToUI([{ from: data.taggerTagFrom, to: data.taggerTagTo || '' }]);
+            } else {
+                setPairsToUI([]);
+            }
 
             if (data.taggerMode) {
                 const radio = document.querySelector(`input[name="tagMode"][value="${data.taggerMode}"]`);
@@ -115,6 +128,180 @@ document.addEventListener('DOMContentLoaded', () => {
             .split(/[\n,]+/)
             .map(t => t.trim())
             .filter(t => t.length > 0);
+    }
+
+    // ── Helper: Multiple A -> B Replacement Pairs Management ──
+    function parsePairsFromText(text) {
+        if (!text) return [];
+        const lines = text.split(/\r?\n/);
+        const pairs = [];
+        for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line) continue;
+            let from = '';
+            let to = '';
+            if (line.includes('\t')) {
+                const parts = line.split('\t');
+                from = parts[0].trim();
+                to = parts.slice(1).join('\t').trim();
+            } else if (line.includes('->')) {
+                const parts = line.split('->');
+                from = parts[0].trim();
+                to = parts.slice(1).join('->').trim();
+            } else if (line.includes('➔') || line.includes('→')) {
+                const parts = line.split(/[➔→]/);
+                from = parts[0].trim();
+                to = parts.slice(1).join('➔').trim();
+            } else if (line.includes('|')) {
+                const parts = line.split('|');
+                from = parts[0].trim();
+                to = parts.slice(1).join('|').trim();
+            } else if (line.includes('>')) {
+                const parts = line.split('>');
+                from = parts[0].trim();
+                to = parts.slice(1).join('>').trim();
+            } else if (line.includes(',')) {
+                const parts = line.split(',');
+                from = parts[0].trim();
+                to = parts.slice(1).join(',').trim();
+            }
+            if (from.length > 0) {
+                pairs.push({ from, to });
+            }
+        }
+        return pairs;
+    }
+
+    function formatPairsToText(pairs) {
+        return pairs.map(p => `${p.from} -> ${p.to}`).join('\n');
+    }
+
+    function createPairRow(fromVal = '', toVal = '') {
+        if (!pairsListContainer) return null;
+        const row = document.createElement('div');
+        row.className = 'pair-row flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl p-1.5 focus-within:border-purple-400 focus-within:bg-white transition-colors';
+        row.innerHTML = `
+            <div class="flex-1 relative">
+                <input type="text" class="tag-from-input w-full text-xs bg-transparent border-0 px-2 py-1 text-slate-800 focus:outline-none placeholder:text-slate-400 font-medium" placeholder="Thẻ A (cần đổi)" value="${fromVal.replace(/"/g, '&quot;')}">
+            </div>
+            <span class="text-purple-600 font-bold text-xs select-none px-0.5">➔</span>
+            <div class="flex-1 relative">
+                <input type="text" class="tag-to-input w-full text-xs bg-transparent border-0 px-2 py-1 text-slate-800 focus:outline-none placeholder:text-slate-400 font-medium" placeholder="Thẻ B (thay thế)" value="${toVal.replace(/"/g, '&quot;')}">
+            </div>
+            <button type="button" class="remove-pair-btn p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors" title="Xóa dòng này">
+                <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        `;
+
+        const fromInput = row.querySelector('.tag-from-input');
+        const toInput = row.querySelector('.tag-to-input');
+        const removeBtn = row.querySelector('.remove-pair-btn');
+
+        const onInputChange = () => {
+            updateTagPreview();
+            savePairsToStorage();
+        };
+
+        fromInput.addEventListener('input', onInputChange);
+        toInput.addEventListener('input', onInputChange);
+
+        removeBtn.addEventListener('click', () => {
+            row.remove();
+            if (pairsListContainer.querySelectorAll('.pair-row').length === 0) {
+                createPairRow('', '');
+            }
+            updateTagPreview();
+            savePairsToStorage();
+        });
+
+        pairsListContainer.appendChild(row);
+        return row;
+    }
+
+    function getPairsFromUI() {
+        if (!pairsListContainer) return [];
+        const rows = pairsListContainer.querySelectorAll('.pair-row');
+        const pairs = [];
+        rows.forEach(row => {
+            const from = row.querySelector('.tag-from-input')?.value.trim() || '';
+            const to = row.querySelector('.tag-to-input')?.value.trim() || '';
+            if (from.length > 0 || to.length > 0) {
+                pairs.push({ from, to });
+            }
+        });
+        return pairs;
+    }
+
+    function setPairsToUI(pairs) {
+        if (!pairsListContainer) return;
+        pairsListContainer.innerHTML = '';
+        if (Array.isArray(pairs) && pairs.length > 0) {
+            pairs.forEach(p => createPairRow(p.from, p.to));
+        } else {
+            createPairRow('', '');
+        }
+        updateTagPreview();
+    }
+
+    function savePairsToStorage() {
+        const pairs = getPairsFromUI();
+        chrome.storage.local.set({ taggerPairs: pairs });
+    }
+
+    let isBulkPairMode = false;
+
+    function toggleBulkMode(forceBulk) {
+        isBulkPairMode = typeof forceBulk === 'boolean' ? forceBulk : !isBulkPairMode;
+        if (!pairsListModeContainer || !bulkTextareaModeContainer) return;
+        if (isBulkPairMode) {
+            const currentPairs = getPairsFromUI();
+            bulkPairsTextarea.value = formatPairsToText(currentPairs);
+            pairsListModeContainer.classList.add('hidden');
+            bulkTextareaModeContainer.classList.remove('hidden');
+            if (toggleBulkPairModeBtn) {
+                toggleBulkPairModeBtn.textContent = '📋 Chuyển dạng bảng';
+                toggleBulkPairModeBtn.className = 'text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors';
+            }
+        } else {
+            const parsed = parsePairsFromText(bulkPairsTextarea.value);
+            setPairsToUI(parsed);
+            savePairsToStorage();
+            bulkTextareaModeContainer.classList.add('hidden');
+            pairsListModeContainer.classList.remove('hidden');
+            if (toggleBulkPairModeBtn) {
+                toggleBulkPairModeBtn.textContent = '📋 Dán nhiều cặp / Excel';
+                toggleBulkPairModeBtn.className = 'text-[11px] font-semibold text-purple-600 hover:text-purple-800 transition-colors';
+            }
+        }
+        updateTagPreview();
+    }
+
+    if (toggleBulkPairModeBtn) {
+        toggleBulkPairModeBtn.addEventListener('click', () => toggleBulkMode());
+    }
+
+    if (applyBulkPairsBtn) {
+        applyBulkPairsBtn.addEventListener('click', () => toggleBulkMode(false));
+    }
+
+    if (addPairRowBtn) {
+        addPairRowBtn.addEventListener('click', () => {
+            const newRow = createPairRow('', '');
+            if (newRow) {
+                const input = newRow.querySelector('.tag-from-input');
+                if (input) input.focus();
+            }
+            updateTagPreview();
+            savePairsToStorage();
+        });
+    }
+
+    if (bulkPairsTextarea) {
+        bulkPairsTextarea.addEventListener('input', () => {
+            updateTagPreview();
+        });
     }
 
     // ── Helper: Sleep ─────────────────────────────────────────
@@ -147,59 +334,133 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const qId = questionData.id || questionData.iid || questionData._id || questionId;
-            const inputTags = (Array.isArray(tags) ? tags : [tags])
-                .map(t => typeof t === 'string' ? t.trim() : String(t).trim())
-                .filter(t => t.length > 0);
 
-            const currentTags = Array.isArray(questionData.tags) ? [...questionData.tags] : [];
+            const currentTags = (Array.isArray(questionData.tags) ? [...questionData.tags] : [])
+                .map(t => String(t).trim());
+
             let finalTags = [];
+            let appliedChanges = [];
 
-            if (mode === 'append') {
-                finalTags = [...new Set([...currentTags, ...inputTags])];
-            } else if (mode === 'replace') {
-                finalTags = [...new Set(inputTags)];
-            } else if (mode === 'remove') {
-                const tagsToRemoveSet = new Set(inputTags.map(t => t.toLowerCase()));
-                const matchedTags = currentTags.filter(t => tagsToRemoveSet.has(t.toLowerCase()));
-
-                if (matchedTags.length === 0) {
-                    return {
-                        success: true,
-                        skipped: true,
-                        message: "Không chứa thẻ cần xóa",
-                        questionId: qId,
-                        oldTags: currentTags,
-                        finalTags: currentTags
-                    };
-                }
-
-                finalTags = currentTags.filter(t => !tagsToRemoveSet.has(t.toLowerCase()));
-            } else if (mode === 'overwrite') {
-                let fromTags = [];
-                let toTags = [];
+            if (mode === 'overwrite') {
+                let cleanPairs = [];
                 if (tags && typeof tags === 'object' && !Array.isArray(tags)) {
-                    fromTags = (Array.isArray(tags.from) ? tags.from : [tags.from || '']).map(t => String(t).trim()).filter(t => t.length > 0);
-                    toTags = (Array.isArray(tags.to) ? tags.to : [tags.to || '']).map(t => String(t).trim()).filter(t => t.length > 0);
+                    if (Array.isArray(tags.pairs)) {
+                        cleanPairs = tags.pairs
+                            .map(p => ({
+                                from: String(p.from || '').trim(),
+                                to: String(p.to || '').trim()
+                            }))
+                            .filter(p => p.from.length > 0);
+                    } else if (tags.from !== undefined) {
+                        const fromArr = (Array.isArray(tags.from) ? tags.from : [tags.from])
+                            .map(t => String(t).trim());
+                        const toArr = (Array.isArray(tags.to) ? tags.to : [tags.to])
+                            .map(t => String(t).trim())
+                            .filter(t => t.length > 0);
+                        fromArr.forEach((fromTag, idx) => {
+                            cleanPairs.push({ from: fromTag, to: toArr[idx] || toArr[0] || '' });
+                        });
+                    }
                 }
 
-                const fromSet = new Set(fromTags.map(t => t.toLowerCase()));
-                const matchedTags = currentTags.filter(t => fromSet.has(t.toLowerCase()));
+                // Map tra cứu thẻ thay thế (phân biệt hoa thường)
+                const replacementMap = new Map();
+                for (const pair of cleanPairs) {
+                    if (!replacementMap.has(pair.from)) {
+                        replacementMap.set(pair.from, pair.to);
+                    }
+                }
 
-                if (matchedTags.length === 0) {
+                const matchedFromTags = new Set();
+                for (const tag of currentTags) {
+                    if (replacementMap.has(tag)) {
+                        matchedFromTags.add(tag);
+                        const toVal = replacementMap.get(tag);
+                        const changeStr = `[${tag}] ➔ [${toVal || '(xóa)'}]`;
+                        if (!appliedChanges.includes(changeStr)) {
+                            appliedChanges.push(changeStr);
+                        }
+                    }
+                }
+
+                if (matchedFromTags.size === 0) {
+                    const fromListNames = cleanPairs.map(p => p.from);
                     return {
                         success: true,
                         skipped: true,
-                        message: `Không chứa thẻ [${fromTags.join(', ')}] để ghi đè`,
+                        message: `Không chứa thẻ nào khớp trong danh sách [${fromListNames.join(', ')}] để ghi đè`,
                         questionId: qId,
                         oldTags: currentTags,
                         finalTags: currentTags
                     };
                 }
 
-                const remainingTags = currentTags.filter(t => !fromSet.has(t.toLowerCase()));
-                finalTags = [...new Set([...remainingTags, ...toTags])];
+                // Duyệt qua currentTags, nếu gặp tag nằm trong replacementMap thì thay thế bằng toVal
+                let newTagsList = [];
+                for (const tag of currentTags) {
+                    if (replacementMap.has(tag)) {
+                        const toVal = replacementMap.get(tag);
+                        if (toVal && toVal.length > 0) {
+                            const subTags = toVal.split(/[\n,]+/).map(t => t.trim()).filter(t => t.length > 0);
+                            newTagsList.push(...subTags);
+                        }
+                    } else {
+                        newTagsList.push(tag);
+                    }
+                }
+
+                // Loại bỏ trùng lặp và tag rác
+                const seen = new Set();
+                finalTags = [];
+                for (const t of newTagsList) {
+                    if (!seen.has(t) && t.length > 0) {
+                        seen.add(t);
+                        finalTags.push(t);
+                    }
+                }
             } else {
-                finalTags = [...new Set([...currentTags, ...inputTags])];
+                let inputTags = [];
+                if (Array.isArray(tags)) {
+                    inputTags = tags.map(t => String(t).trim()).filter(t => t.length > 0);
+                } else if (typeof tags === 'string') {
+                    inputTags = [tags.trim()].filter(t => t.length > 0);
+                }
+
+                if (mode === 'append') {
+                    const seen = new Set();
+                    finalTags = [];
+                    for (const t of [...currentTags, ...inputTags]) {
+                        if (!seen.has(t) && t.length > 0) {
+                            seen.add(t);
+                            finalTags.push(t);
+                        }
+                    }
+                } else if (mode === 'replace') {
+                    const seen = new Set();
+                    finalTags = [];
+                    for (const t of inputTags) {
+                        if (!seen.has(t) && t.length > 0) {
+                            seen.add(t);
+                            finalTags.push(t);
+                        }
+                    }
+                } else if (mode === 'remove') {
+                    const tagsToRemoveSet = new Set(inputTags);
+                    const matchedTags = currentTags.filter(t => tagsToRemoveSet.has(t));
+
+                    if (matchedTags.length === 0) {
+                        return {
+                            success: true,
+                            skipped: true,
+                            message: "Không chứa thẻ cần xóa",
+                            questionId: qId,
+                            oldTags: currentTags,
+                            finalTags: currentTags
+                        };
+                    }
+
+                    finalTags = currentTags.filter(t => !tagsToRemoveSet.has(t));
+                }
             }
 
             // Gửi request cập nhật
@@ -231,6 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     questionId: qId,
                     oldTags: currentTags,
                     finalTags: finalTags,
+                    appliedChanges: appliedChanges,
                     mode
                 };
             } else {
@@ -303,6 +565,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Cho phép click vào bất kỳ vùng nào trên card để chọn chế độ
+    const modeCards = [
+        { card: modeCardAppend, value: 'append' },
+        { card: modeCardRemove, value: 'remove' },
+        { card: modeCardOverwrite, value: 'overwrite' },
+        { card: modeCardReplace, value: 'replace' }
+    ];
+
+    modeCards.forEach(({ card, value }) => {
+        if (!card) return;
+        card.addEventListener('click', () => {
+            const radio = card.querySelector(`input[name="tagMode"][value="${value}"]`);
+            if (radio && !radio.checked) {
+                radio.checked = true;
+                updateModeUI();
+                chrome.storage.local.set({ taggerMode: value });
+            }
+        });
+    });
+
     // ── Realtime Count & Preview ──────────────────────────────
     function updateQuestionCount() {
         const ids = SharedUI.parseMultilineInput(questionIdsInput.value);
@@ -327,10 +609,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const mode = getSelectedMode();
 
         if (mode === 'overwrite') {
-            const fromTags = [...new Set(parseTags(tagInputFrom ? tagInputFrom.value : ''))];
-            const toTags = [...new Set(parseTags(tagInputTo ? tagInputTo.value : ''))];
+            const rawPairs = isBulkPairMode
+                ? parsePairsFromText(bulkPairsTextarea ? bulkPairsTextarea.value : '')
+                : getPairsFromUI();
+            const validPairs = rawPairs.filter(p => p.from && p.from.trim().length > 0);
 
-            if (fromTags.length === 0 && toTags.length === 0) {
+            if (pairCountBadge) {
+                pairCountBadge.textContent = `${validPairs.length} cặp`;
+                pairCountBadge.className = validPairs.length > 0
+                    ? 'text-xs font-semibold text-purple-600 font-medium'
+                    : 'text-[11px] text-slate-400 font-medium';
+            }
+
+            if (validPairs.length === 0) {
                 tagsPreviewContainer.classList.add('hidden');
                 tagsPreviewList.innerHTML = '';
                 return;
@@ -339,25 +630,27 @@ document.addEventListener('DOMContentLoaded', () => {
             tagsPreviewContainer.classList.remove('hidden');
             tagsPreviewList.innerHTML = '';
 
-            const wrapper = document.createElement('div');
-            wrapper.className = 'flex items-center gap-2 flex-wrap text-xs';
+            validPairs.forEach(p => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'flex items-center gap-1.5 text-xs bg-purple-50/80 border border-purple-200 rounded-lg px-2 py-0.5 shadow-sm';
 
-            const fromPill = document.createElement('span');
-            fromPill.className = 'tag-pill tag-pill-removed';
-            fromPill.textContent = fromTags.length > 0 ? fromTags.join(', ') : '(Thẻ A chưa nhập)';
+                const fromPill = document.createElement('span');
+                fromPill.className = 'font-semibold text-rose-700 font-mono text-[11px]';
+                fromPill.textContent = p.from;
 
-            const arrow = document.createElement('span');
-            arrow.className = 'text-purple-600 font-bold text-sm';
-            arrow.textContent = '➔';
+                const arrow = document.createElement('span');
+                arrow.className = 'text-purple-600 font-bold text-[11px] select-none';
+                arrow.textContent = '➔';
 
-            const toPill = document.createElement('span');
-            toPill.className = 'tag-pill tag-pill-added';
-            toPill.textContent = toTags.length > 0 ? toTags.join(', ') : '(Thẻ B chưa nhập)';
+                const toPill = document.createElement('span');
+                toPill.className = 'font-semibold text-emerald-700 font-mono text-[11px]';
+                toPill.textContent = p.to || '(Xóa thẻ)';
 
-            wrapper.appendChild(fromPill);
-            wrapper.appendChild(arrow);
-            wrapper.appendChild(toPill);
-            tagsPreviewList.appendChild(wrapper);
+                wrapper.appendChild(fromPill);
+                wrapper.appendChild(arrow);
+                wrapper.appendChild(toPill);
+                tagsPreviewList.appendChild(wrapper);
+            });
             return;
         }
 
@@ -401,29 +694,16 @@ document.addEventListener('DOMContentLoaded', () => {
         chrome.storage.local.set({ taggerTagsInput: tagInput.value });
     });
 
-    if (tagInputFrom) {
-        tagInputFrom.addEventListener('input', () => {
-            updateTagPreview();
-            chrome.storage.local.set({ taggerTagFrom: tagInputFrom.value });
-        });
-    }
-
-    if (tagInputTo) {
-        tagInputTo.addEventListener('input', () => {
-            updateTagPreview();
-            chrome.storage.local.set({ taggerTagTo: tagInputTo.value });
-        });
-    }
 
     // ── Log Helper ────────────────────────────────────────────
     function addLog(message, type = 'info') {
         const colors = {
-            info:    'text-blue-400',
+            info: 'text-blue-400',
             success: 'text-green-400',
             warning: 'text-amber-400',
-            error:   'text-red-400',
-            header:  'text-gray-100 font-bold',
-            dim:     'text-gray-500'
+            error: 'text-red-400',
+            header: 'text-gray-100 font-bold',
+            dim: 'text-gray-500'
         };
 
         const timeStr = new Date().toLocaleTimeString('vi-VN', { hour12: false });
@@ -454,10 +734,10 @@ document.addEventListener('DOMContentLoaded', () => {
             ? `Đang xử lý: ${done}/${total} câu hỏi...`
             : `Đã xử lý: ${done}/${total} câu hỏi`;
 
-        statTotal.textContent     = total;
-        statSuccess.textContent   = success;
-        statSkipped.textContent   = skipped;
-        statFailed.textContent    = failed;
+        statTotal.textContent = total;
+        statSuccess.textContent = success;
+        statSkipped.textContent = skipped;
+        statFailed.textContent = failed;
         statRemaining.textContent = Math.max(0, total - done);
     }
 
@@ -469,10 +749,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return tags.map(tag => {
             let cls = 'tag-pill tag-pill-neutral';
-            if (type === 'added')       cls = 'tag-pill tag-pill-added';
-            if (type === 'removed')     cls = 'tag-pill tag-pill-removed';
-            if (type === 'new')         cls = 'tag-pill tag-pill-new';
-            if (type === 'overwrite')   cls = 'tag-pill tag-pill-overwrite';
+            if (type === 'added') cls = 'tag-pill tag-pill-added';
+            if (type === 'removed') cls = 'tag-pill tag-pill-removed';
+            if (type === 'new') cls = 'tag-pill tag-pill-new';
+            if (type === 'overwrite') cls = 'tag-pill tag-pill-overwrite';
 
             // Escape HTML
             const safe = String(tag).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -608,22 +888,25 @@ document.addEventListener('DOMContentLoaded', () => {
         let modeDescription = '';
 
         if (mode === 'overwrite') {
-            const fromTags = [...new Set(parseTags(tagInputFrom ? tagInputFrom.value : ''))];
-            const toTags = [...new Set(parseTags(tagInputTo ? tagInputTo.value : ''))];
+            const rawPairs = isBulkPairMode
+                ? parsePairsFromText(bulkPairsTextarea ? bulkPairsTextarea.value : '')
+                : getPairsFromUI();
+            const validPairs = rawPairs.filter(p => p.from && p.from.trim().length > 0);
 
-            if (fromTags.length === 0) {
+            if (validPairs.length === 0) {
                 SharedUI.showMessage(statusResultDiv, messageP,
-                    'Vui lòng nhập thẻ A cần thay thế.', 'error');
-                return;
-            }
-            if (toTags.length === 0) {
-                SharedUI.showMessage(statusResultDiv, messageP,
-                    'Vui lòng nhập thẻ B mới thay thế vào.', 'error');
+                    'Vui lòng nhập ít nhất một cặp thẻ A ➔ B (Thẻ A không được để trống).', 'error');
                 return;
             }
 
-            targetTags = { from: fromTags, to: toTags };
-            modeDescription = `Đổi thẻ [${fromTags.join(', ')}] ➔ [${toTags.join(', ')}]`;
+            // Đồng bộ lại vào UI bảng nếu đang mở Bulk Textarea
+            if (isBulkPairMode) {
+                setPairsToUI(validPairs);
+            }
+
+            targetTags = { pairs: validPairs };
+            const previewPairs = validPairs.slice(0, 3).map(p => `[${p.from} ➔ ${p.to || '(xóa)'}]`).join(', ');
+            modeDescription = `Đổi ${validPairs.length} cặp thẻ: ${previewPairs}${validPairs.length > 3 ? '...' : ''}`;
         } else {
             targetTags = [...new Set(parseTags(tagInput.value))];
             if (targetTags.length === 0) {
@@ -637,12 +920,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Save settings to local storage
         chrome.storage.local.set({
             taggerQuestionIds: questionIdsInput.value,
-            taggerTagsInput:   tagInput.value,
-            taggerTagFrom:     tagInputFrom ? tagInputFrom.value : '',
-            taggerTagTo:       tagInputTo ? tagInputTo.value : '',
-            taggerMode:        mode,
-            taggerBatchSize:   batchSize,
-            taggerDelayMs:     delayMs
+            taggerTagsInput: tagInput.value,
+            taggerPairs: getPairsFromUI(),
+            taggerMode: mode,
+            taggerBatchSize: batchSize,
+            taggerDelayMs: delayMs
         });
 
         // Set running state
@@ -670,9 +952,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let successCount = 0;
         let skippedCount = 0;
-        let failedCount  = 0;
-        let doneCount    = 0;
-        let rowIndex     = 1;
+        let failedCount = 0;
+        let doneCount = 0;
+        let rowIndex = 1;
 
         // Process in batches
         for (let i = 0; i < questionIds.length; i += batchSize) {
@@ -684,30 +966,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const batch = questionIds.slice(i, i + batchSize);
             const batchPromises = batch.map(async (qid) => {
                 try {
-                    // Thử gửi qua background service worker trước
-                    const bgResponse = await new Promise((resolve) => {
-                        chrome.runtime.sendMessage({
-                            action: "updateQuestionTags",
-                            uid: currentUid,
-                            token: currentToken,
-                            questionId: qid,
-                            tags: targetTags,
-                            mode: mode
-                        }, (response) => {
-                            if (chrome.runtime.lastError) {
-                                // Background port có thể bị đóng nếu extension chưa được reload
-                                resolve(null);
-                            } else {
-                                resolve(response);
-                            }
-                        });
-                    });
-
-                    if (bgResponse) {
-                        return bgResponse;
-                    }
-
-                    // Tự động fallback gọi trực tiếp API từ trang extension
                     return await executeTagUpdateDirectly(qid, targetTags, mode, currentUid, currentToken);
                 } catch (err) {
                     return {
@@ -736,7 +994,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         status = 'skipped';
                         statusText = 'Bỏ qua';
                         skippedCount++;
-                        note = res.message || (mode === 'overwrite' ? 'Không chứa thẻ A để ghi đè' : 'Không chứa thẻ cần xóa');
+                        note = res.message || (mode === 'overwrite' ? 'Không chứa thẻ nào khớp để ghi đè' : 'Không chứa thẻ cần xóa');
                         addLog(`[${doneCount}/${questionIds.length}] ℹ ID ${qid}: ${note}`, 'warning');
                     } else {
                         status = 'success';
@@ -749,9 +1007,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             const removed = oldTags.filter(t => !finalTags.includes(t));
                             note = `Đã xóa ${removed.length} thẻ: [${removed.join(', ')}]`;
                         } else if (mode === 'overwrite') {
-                            const fromList = targetTags.from || [];
-                            const toList = targetTags.to || [];
-                            note = `Đã đổi [${fromList.join(', ')}] thành [${toList.join(', ')}]`;
+                            if (res.appliedChanges && res.appliedChanges.length > 0) {
+                                note = `Đã đổi: ${res.appliedChanges.join(', ')}`;
+                            } else {
+                                note = 'Đã cập nhật thẻ';
+                            }
                         } else {
                             note = `Đã thay thế bằng ${finalTags.length} thẻ`;
                         }
