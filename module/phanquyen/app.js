@@ -337,6 +337,7 @@ async function fetchItemDetail(config, itemId) {
     _sand_masked: "",
     _sand_session_id: config.sessionId,
     _sand_use_internal_network: "0",
+    _sand_client_sync_token: "vdi_extenstion",
     allow_cache_api_cdn: "1",
     lang: "vn",
     _sand_user_agent: navigator.userAgent,
@@ -492,6 +493,7 @@ async function searchContentPage(config, parentId, parentPath, level, page) {
     _sand_masked: "",
     _sand_session_id: config.sessionId,
     _sand_use_internal_network: "0",
+    _sand_client_sync_token: "vdi_extenstion",
     allow_cache_api_cdn: "1",
     lang: "vn",
     _sand_user_agent: navigator.userAgent
@@ -570,6 +572,7 @@ async function searchUsersByIids(config, iids) {
       _sand_masked: "",
       _sand_session_id: config.sessionId,
       _sand_use_internal_network: "0",
+      _sand_client_sync_token: "vdi_extenstion",
       allow_cache_api_cdn: "1",
       lang: "vn",
       _sand_user_agent: navigator.userAgent
@@ -772,6 +775,7 @@ function baseForm(config, webUrl) {
   form.append("allow_cache_api_cdn", "1");
   form.append("_sand_token", config.sandToken);
   form.append("_sand_uiid", config.sandUiid);
+  form.append("_sand_client_sync_token", "vdi_extenstion");
   if (config.sandUid) form.append("_sand_uid", config.sandUid);
   form.append("lang", "vn");
   form.append("_sand_user_agent", navigator.userAgent);
@@ -779,6 +783,9 @@ function baseForm(config, webUrl) {
 }
 
 async function post(url, form) {
+  if (form && typeof form.append === "function" && (!form.has || !form.has("_sand_client_sync_token"))) {
+    form.append("_sand_client_sync_token", "vdi_extenstion");
+  }
   const response = await fetch(url, {
     method: "POST",
     body: form,

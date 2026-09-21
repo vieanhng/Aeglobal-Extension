@@ -321,12 +321,14 @@ document.addEventListener('DOMContentLoaded', () => {
         url.searchParams.append('allow_cache_api_cdn', config.allowCache);
         url.searchParams.append('editing_syllabus', '2');
         url.searchParams.append('lang', 'vn');
+        url.searchParams.append('_sand_client_sync_token', 'vdi_extenstion');
 
         const formData = new FormData();
         formData.append('_sand_web_url', `https://${config.domain}.lotuslms.com/admin/materials/syllabus/${iid}/children`);
         formData.append('_sand_device_uuid', generateUUID());
         formData.append('_sand_token', config.token);
         formData.append('_sand_uiid', config.uid);
+        formData.append('_sand_client_sync_token', 'vdi_extenstion');
         formData.append('_sand_uid', '6576b1b5d18d78fd5f032742');
 
         formData.append('_sand_ri', '8002e9e2607a500dd3a7e15ef478c828');

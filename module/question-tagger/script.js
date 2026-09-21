@@ -314,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function executeTagUpdateDirectly(questionId, tags, mode, uid, token) {
         try {
             // 1. Tìm câu hỏi qua API search
-            const searchUrl = `${API_BASE}/question/index/search?_sand_get_total=0&search_from_bank=1&ntype=question&q=${encodeURIComponent(questionId)}&submit=1&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
+            const searchUrl = `${API_BASE}/question/index/search?_sand_get_total=0&search_from_bank=1&ntype=question&q=${encodeURIComponent(questionId)}&submit=1&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}&_sand_client_sync_token=vdi_extenstion`;
             const searchResponse = await fetch(searchUrl, { method: "POST" });
             const searchData = await searchResponse.json();
 
@@ -473,6 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('_sand_domain', DOMAIN);
             formData.append('_sand_token', token);
             formData.append('_sand_uiid', uid);
+            formData.append('_sand_client_sync_token', 'vdi_extenstion');
 
             finalTags.forEach((tag, index) => {
                 formData.append(`questionData[tags][${index}]`, tag);

@@ -109,12 +109,13 @@ document.addEventListener('DOMContentLoaded', () => {
         fd.append("_sand_device_uuid", generateUUID());
         fd.append("_sand_token", currentToken);
         fd.append("_sand_uiid", currentUid);
+        fd.append("_sand_client_sync_token", "vdi_extenstion");
         return fd;
     }
 
     // Fetch folder content
     async function fetchFolderContent(folderId, config) {
-        const url = `https://cloud-beta-api.lotuslms.com/content/api/search-content?_sand_get_total=0&parent_id=${folderId}&items_per_page=-1&depth=1&submit=1&page=1&_sand_ajax=1&_sand_platform=3&_sand_readmin=1&_sand_is_wan=false&_sand_domain=${config.domain}&allow_cache_api_cdn=1`;
+        const url = `https://cloud-beta-api.lotuslms.com/content/api/search-content?_sand_get_total=0&parent_id=${folderId}&items_per_page=-1&depth=1&submit=1&page=1&_sand_ajax=1&_sand_platform=3&_sand_readmin=1&_sand_is_wan=false&_sand_domain=${config.domain}&allow_cache_api_cdn=1&_sand_client_sync_token=vdi_extenstion`;
 
         try {
             const response = await fetch(url, {

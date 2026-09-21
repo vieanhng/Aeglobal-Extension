@@ -15,6 +15,7 @@ const duplicateQuestion = async (questionId, uid, token) => {
         formData.append('_sand_token', token);
         formData.append('_sand_uiid', uid);
         formData.append('_sand_domain', DOMAIN);
+        formData.append('_sand_client_sync_token', 'vdi_extenstion');
 
         const response = await fetch(`${API_BASE}/site/index/deep-clone`, {
             method: "POST",
@@ -56,6 +57,7 @@ const deleteQuestion = async (questionId, uid, token) => {
         formData.append('lang', 'vn');
         formData.append('_sand_token', token);
         formData.append('_sand_uiid', uid);
+        formData.append('_sand_client_sync_token', 'vdi_extenstion');
 
         const response = await fetch(`${API_BASE}/question/delete`, {
             method: "POST",
@@ -90,6 +92,7 @@ const moveQuestionsToBank = async (questionIdsToMove, bankId, uid, token) => {
         formData.append('_sand_domain', DOMAIN);
         formData.append('_sand_token', token);
         formData.append('_sand_uiid', uid);
+        formData.append('_sand_client_sync_token', 'vdi_extenstion');
 
         // Append danh sách ID câu hỏi theo format ids[0], ids[1]...
         questionIdsToMove.forEach((id, index) => {
@@ -122,7 +125,7 @@ const moveQuestionsToBank = async (questionIdsToMove, bankId, uid, token) => {
 const findQuestion = async (questionId, uid, token) => {
     try {
         // Step 1: Search câu hỏi
-        const searchUrl = `${API_BASE}/question/index/search?_sand_get_total=0&search_from_bank=1&ntype=question&q=${encodeURIComponent(questionId)}&submit=1&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
+        const searchUrl = `${API_BASE}/question/index/search?_sand_get_total=0&search_from_bank=1&ntype=question&q=${encodeURIComponent(questionId)}&submit=1&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}&_sand_client_sync_token=vdi_extenstion`;
 
         const searchResponse = await fetch(searchUrl, { method: "POST" });
         const searchData = await searchResponse.json();
@@ -142,7 +145,7 @@ const findQuestion = async (questionId, uid, token) => {
                 if (questionData.question_bank) {
                     bankUrl = `https://${DOMAIN}.lotuslms.com/admin/question-bank/${questionData.question_bank}`;
                     try {
-                        const bankUrlApi = `${API_BASE}/question-bank/editor/fetch-node?iid=${questionData.question_bank}&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
+                        const bankUrlApi = `${API_BASE}/question-bank/editor/fetch-node?iid=${questionData.question_bank}&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}&_sand_client_sync_token=vdi_extenstion`;
                         const bankResponse = await fetch(bankUrlApi, { method: "POST" });
                         const bankData = await bankResponse.json();
                         if (bankData.result && bankData.result.name) {
@@ -313,6 +316,7 @@ const updateQuestionTags = async (questionObject, tags, mode = 'append', uid, to
         formData.append('_sand_domain', DOMAIN);
         formData.append('_sand_token', token);
         formData.append('_sand_uiid', uid);
+        formData.append('_sand_client_sync_token', 'vdi_extenstion');
 
         // Map mảng tags vào FormData
         finalTags.forEach((tag, index) => {
@@ -576,7 +580,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 }
 
                 // 1. Tìm thông tin câu hỏi
-                const searchUrl = `${API_BASE}/question/index/search?_sand_get_total=0&search_from_bank=1&ntype=question&q=${encodeURIComponent(questionId)}&submit=1&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
+                const searchUrl = `${API_BASE}/question/index/search?_sand_get_total=0&search_from_bank=1&ntype=question&q=${encodeURIComponent(questionId)}&submit=1&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}&_sand_client_sync_token=vdi_extenstion`;
                 const searchResponse = await fetch(searchUrl, { method: "POST" });
                 const searchData = await searchResponse.json();
 
@@ -640,7 +644,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 if (needsResolve) {
                     console.log(`Resolving shortcode: ${bankId}`);
                     try {
-                        const resolveUrl = `${API_BASE}/content/api/item-detail?item_id=${bankId}&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
+                        const resolveUrl = `${API_BASE}/content/api/item-detail?item_id=${bankId}&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}&_sand_client_sync_token=vdi_extenstion`;
 
                         const resolveResponse = await Promise.race([
                             fetch(resolveUrl, { method: "POST" }),
@@ -678,7 +682,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 }
 
                 // Step 1: Get bank info with timeout
-                const bankUrl = `${API_BASE}/question-bank/editor/fetch-node?iid=${actualBankId}&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
+                const bankUrl = `${API_BASE}/question-bank/editor/fetch-node?iid=${actualBankId}&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}&_sand_client_sync_token=vdi_extenstion`;
 
                 const bankResponse = await Promise.race([
                     fetch(bankUrl, { method: "POST" }),
@@ -700,7 +704,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 console.log(`Bank name: ${bankName}`);
 
                 // Step 2: Search all questions in the bank with timeout
-                const searchUrl = `${API_BASE}/question/index/search?_sand_get_total=0&question_bank[]=${actualBankId}&items_per_page=-1&page=1&ntype=question&submit=1&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
+                const searchUrl = `${API_BASE}/question/index/search?_sand_get_total=0&question_bank[]=${actualBankId}&items_per_page=-1&page=1&ntype=question&submit=1&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}&_sand_client_sync_token=vdi_extenstion`;
 
                 const searchResponse = await Promise.race([
                     fetch(searchUrl, { method: "POST" }),
@@ -797,7 +801,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         (async () => {
             try {
                 // Bước 1: Resolve shortcode → target_item_iid
-                const resolveUrl = `${API_BASE}/content/api/item-detail?item_id=${shortcode}&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
+                const resolveUrl = `${API_BASE}/content/api/item-detail?item_id=${shortcode}&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}&_sand_client_sync_token=vdi_extenstion`;
                 const resolveResponse = await Promise.race([
                     fetch(resolveUrl, { method: 'POST' }),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
@@ -820,7 +824,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 const iid = resolveData.result.target_item_iid;
 
                 // Bước 2: Lấy tên ngân hàng
-                const bankUrl = `${API_BASE}/question-bank/editor/fetch-node?iid=${iid}&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
+                const bankUrl = `${API_BASE}/question-bank/editor/fetch-node?iid=${iid}&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}&_sand_client_sync_token=vdi_extenstion`;
                 const bankResponse = await Promise.race([
                     fetch(bankUrl, { method: 'POST' }),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))

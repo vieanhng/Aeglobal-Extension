@@ -46,7 +46,7 @@ const SharedBankUtils = {
         const DOMAIN = "aeglobal";
 
         try {
-            const resolveUrl = `${API_BASE}/content/api/item-detail?item_id=${shortcode}&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
+            const resolveUrl = `${API_BASE}/content/api/item-detail?item_id=${shortcode}&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}&_sand_client_sync_token=vdi_extenstion`;
 
             const response = await Promise.race([
                 fetch(resolveUrl, { method: "POST" }),
@@ -79,7 +79,7 @@ const SharedBankUtils = {
         const DOMAIN = "aeglobal";
 
         try {
-            const bankUrl = `${API_BASE}/question-bank/editor/fetch-node?iid=${bankId}&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}`;
+            const bankUrl = `${API_BASE}/question-bank/editor/fetch-node?iid=${bankId}&_sand_domain=${DOMAIN}&_sand_token=${token}&_sand_uiid=${uid}&_sand_client_sync_token=vdi_extenstion`;
 
             const response = await Promise.race([
                 fetch(bankUrl, { method: "POST" }),

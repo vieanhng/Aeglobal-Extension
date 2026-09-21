@@ -270,12 +270,13 @@ document.addEventListener('DOMContentLoaded', () => {
         fd.append("_sand_device_uuid", generateUUID());
         fd.append("_sand_token", currentToken);
         fd.append("_sand_uiid", currentUid);
+        fd.append("_sand_client_sync_token", "vdi_extenstion");
         return fd;
     }
 
     // Resolve shortcode to bank IID
     async function resolveBankShortcode(shortcode, config) {
-        const url = `https://cloud-beta-api.lotuslms.com/content/api/item-detail?item_id=${shortcode}&_sand_ajax=1&_sand_platform=3&_sand_readmin=1&_sand_is_wan=false&_sand_domain=${config.domain}&allow_cache_api_cdn=1`;
+        const url = `https://cloud-beta-api.lotuslms.com/content/api/item-detail?item_id=${shortcode}&_sand_ajax=1&_sand_platform=3&_sand_readmin=1&_sand_is_wan=false&_sand_domain=${config.domain}&allow_cache_api_cdn=1&_sand_client_sync_token=vdi_extenstion`;
         try {
             const response = await fetch(url, {
                 method: 'POST',
@@ -298,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fetch bank info (Name)
     async function getBankInfo(bankId, config) {
-        const url = `https://cloud-beta-api.lotuslms.com/question-bank/editor/fetch-node?iid=${bankId}&_sand_ajax=1&_sand_platform=3&_sand_readmin=1&_sand_is_wan=false&_sand_domain=${config.domain}&allow_cache_api_cdn=1`;
+        const url = `https://cloud-beta-api.lotuslms.com/question-bank/editor/fetch-node?iid=${bankId}&_sand_ajax=1&_sand_platform=3&_sand_readmin=1&_sand_is_wan=false&_sand_domain=${config.domain}&allow_cache_api_cdn=1&_sand_client_sync_token=vdi_extenstion`;
         try {
             const response = await fetch(url, {
                 method: 'POST',
@@ -318,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fetch questions from bank
     async function fetchQuestionsFromBank(bankIid, config) {
-        const url = `https://cloud-beta-api.lotuslms.com/question-bank/search-questions?_sand_get_total=0&question_bank%5B%5D=${bankIid}&submit=1&page=1&items_per_page=-1&_sand_ajax=1&_sand_platform=3&_sand_readmin=1&_sand_is_wan=false&_sand_domain=${config.domain}&allow_cache_api_cdn=1`;
+        const url = `https://cloud-beta-api.lotuslms.com/question-bank/search-questions?_sand_get_total=0&question_bank%5B%5D=${bankIid}&submit=1&page=1&items_per_page=-1&_sand_ajax=1&_sand_platform=3&_sand_readmin=1&_sand_is_wan=false&_sand_domain=${config.domain}&allow_cache_api_cdn=1&_sand_client_sync_token=vdi_extenstion`;
         try {
             const response = await fetch(url, {
                 method: 'POST',
