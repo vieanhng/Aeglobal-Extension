@@ -181,6 +181,7 @@ const findQuestion = async (questionId, uid, token) => {
  */
 const updateQuestionTags = async (questionObject, tags, mode = 'append', uid, token) => {
     const qId = questionObject.id || questionObject.iid;
+    let currentTags = questionObject?.tags || [];
     console.log(`Đang xử lý tags (chế độ: ${mode}) cho ID: ${qId}`);
 
     try {
