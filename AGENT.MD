@@ -3,7 +3,7 @@
 ## Tổng quan dự án
 
 **Tên:** Aeglobal Tools  
-**Phiên bản:** 3.1.0  
+**Phiên bản:** 3.1.2  
 **Loại:** Chrome Extension (Manifest V3)  
 **Mục đích:** Công cụ tự động hóa cho hệ thống quản lý học tập (LMS) tại `aeglobal.lotuslms.com` và `aeglobal2.lotuslms.com`.
 
@@ -19,7 +19,7 @@ Aeglobal Extension/
 ├── background.js              # Service worker — xử lý tất cả API calls và CORS
 ├── popup.html                 # Giao diện popup chính (Tabs, Quick Search, Categorized cards)
 ├── popup.js                   # Logic của popup (xác thực, tìm kiếm, bộ lọc tabs, điều hướng)
-├── content_script.js          # Script inject vào trang LotusLMS (IID badge overlay)
+├── content_script.js          # Script inject vào trang LotusLMS (IID badge overlay, Question ID badge)
 ├── options.html               # Trang tùy chọn
 ├── icons/                     # Icon extension (16, 32, 48, 128px)
 ├── lib/
