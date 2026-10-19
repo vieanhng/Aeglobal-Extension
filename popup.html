@@ -945,7 +945,7 @@
     </div>
 
     <!-- ── Settings Footer ── -->
-    <div class="mt-3 pt-2.5 border-t border-slate-200">
+    <div class="mt-3 pt-2.5 border-t border-slate-200" style="display: flex; flex-direction: column; gap: 6px;">
         <div class="setting-row">
             <label class="setting-label" for="toggleBankIidOverlay">
                 Hiển thị IID ngân hàng trên web
@@ -953,6 +953,16 @@
             </label>
             <label class="toggle-switch">
                 <input type="checkbox" id="toggleBankIidOverlay" checked>
+                <span class="toggle-track"></span>
+            </label>
+        </div>
+        <div class="setting-row">
+            <label class="setting-label" for="toggleQuestionIdBadge">
+                Hiển thị ID câu hỏi
+                <small>Hiện badge ID và click để sao chép trên trang câu hỏi</small>
+            </label>
+            <label class="toggle-switch">
+                <input type="checkbox" id="toggleQuestionIdBadge" checked>
                 <span class="toggle-track"></span>
             </label>
         </div>

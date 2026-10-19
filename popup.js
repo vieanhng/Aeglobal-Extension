@@ -397,6 +397,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ── Cài đặt: Toggle hiển thị ID câu hỏi trên trang ────────
+    const toggleQuestionIdBadge = document.getElementById('toggleQuestionIdBadge');
+    if (toggleQuestionIdBadge) {
+        chrome.storage.local.get({ showQuestionIdBadge: true }, (data) => {
+            toggleQuestionIdBadge.checked = data.showQuestionIdBadge;
+        });
+
+        toggleQuestionIdBadge.addEventListener('change', () => {
+            chrome.storage.local.set({ showQuestionIdBadge: toggleQuestionIdBadge.checked });
+        });
+    }
+
     // ── Bộ lọc Tab & Tìm kiếm chức năng ──
     const categoryTabs = document.querySelectorAll('#categoryTabs .tab-btn');
     const groupSections = document.querySelectorAll('.group-section');

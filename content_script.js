@@ -52,7 +52,20 @@ try {
     function start() {
         installUrlChangeWatcher();
         installContainerWatcher();
+        installStorageListener();
         syncOverlayWithUrl();
+    }
+
+    function installStorageListener() {
+        chrome.storage.onChanged.addListener((changes, areaName) => {
+            if (areaName === 'local' && changes.showBankIidOverlay) {
+                if (!changes.showBankIidOverlay.newValue) {
+                    removeOverlay();
+                } else {
+                    syncOverlayWithUrl();
+                }
+            }
+        });
     }
 
     function installUrlChangeWatcher() {
@@ -407,3 +420,152 @@ try {
         valueEl.onclick = null;
     }
 })();
+
+// --- Hiển thị ID câu hỏi trên trang ---
+(function initQuestionIdBadges() {
+    const SELECTOR = ".question-panel[id^='question-wrapper-id-']";
+    const BADGE = "qid-minimal-badge";
+    const PREFIX = "question-wrapper-id-";
+    const STYLE_ID = "aeglobal-qid-badge-style";
+
+    let isEnabled = false;
+    let observer = null;
+
+    function injectStyle() {
+        if (document.getElementById(STYLE_ID)) return;
+        const style = document.createElement("style");
+        style.id = STYLE_ID;
+        style.textContent = `
+            .${BADGE} {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+                padding: 2px 7px;
+                margin: 4px 6px 4px 0;
+                font-size: 11px;
+                font-weight: 600;
+                font-family: 'Courier New', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                color: #475569;
+                background-color: #f8fafc;
+                border: 1px solid #cbd5e1;
+                border-radius: 4px;
+                cursor: pointer;
+                line-height: 1.4;
+                transition: all 0.15s ease-in-out;
+                user-select: none;
+                vertical-align: middle;
+                outline: none;
+                box-sizing: border-box;
+            }
+            .${BADGE}:hover {
+                background-color: #f1f5f9;
+                color: #1e293b;
+                border-color: #94a3b8;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            }
+            .${BADGE}:active {
+                transform: scale(0.97);
+            }
+            .${BADGE}.is-copied {
+                background-color: #ecfdf5 !important;
+                color: #059669 !important;
+                border-color: #6ee7b7 !important;
+            }
+        `;
+        (document.head || document.documentElement).appendChild(style);
+    }
+
+    function addLabel(panel) {
+        if (!isEnabled) return;
+        if (panel.querySelector(`:scope > .${BADGE}`)) return;
+
+        const id = panel.id.startsWith(PREFIX) ? panel.id.slice(PREFIX.length) : "";
+        if (!id) return;
+
+        const label = document.createElement("button");
+        label.type = "button";
+        label.className = BADGE;
+        label.textContent = id;
+        label.title = "Sao chép ID câu hỏi";
+        label.setAttribute("aria-label", `Sao chép ID câu hỏi ${id}`);
+
+        label.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            try {
+                await navigator.clipboard.writeText(id);
+                label.classList.add("is-copied");
+                label.textContent = "Copied";
+            } catch {
+                label.textContent = id;
+            }
+            window.setTimeout(() => {
+                if (label.isConnected) {
+                    label.classList.remove("is-copied");
+                    label.textContent = id;
+                }
+            }, 1100);
+        });
+
+        panel.insertBefore(label, panel.firstChild);
+    }
+
+    function scan(root = document) {
+        if (!isEnabled) return;
+        if (root instanceof Element && root.matches(SELECTOR)) addLabel(root);
+        root.querySelectorAll?.(SELECTOR).forEach(addLabel);
+    }
+
+    function removeAllBadges() {
+        document.querySelectorAll(`.${BADGE}`).forEach((el) => el.remove());
+    }
+
+    function startObserver() {
+        if (observer) return;
+        observer = new MutationObserver((records) => {
+            if (!isEnabled) return;
+            for (const record of records) {
+                for (const node of record.addedNodes) {
+                    if (node.nodeType === Node.ELEMENT_NODE) scan(node);
+                }
+            }
+        });
+
+        const target = document.documentElement || document.body;
+        if (target) {
+            observer.observe(target, { childList: true, subtree: true });
+        }
+    }
+
+    function setEnabled(val) {
+        isEnabled = Boolean(val);
+        if (isEnabled) {
+            injectStyle();
+            startObserver();
+            scan();
+        } else {
+            removeAllBadges();
+        }
+    }
+
+    function start() {
+        chrome.storage.local.get({ showQuestionIdBadge: true }, (settings) => {
+            setEnabled(settings.showQuestionIdBadge);
+        });
+
+        chrome.storage.onChanged.addListener((changes, areaName) => {
+            if (areaName === 'local' && changes.showQuestionIdBadge) {
+                setEnabled(changes.showQuestionIdBadge.newValue);
+            }
+        });
+    }
+
+    start();
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            if (isEnabled) scan();
+        });
+    }
+})();
+
