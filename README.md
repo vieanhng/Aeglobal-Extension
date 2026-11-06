@@ -11,6 +11,7 @@ Extension hỗ trợ tự động hoá cho hệ thống **Aeglobal LotusLMS**, g
 | 📋 Xem câu hỏi trong phiếu | Xem toàn bộ danh sách câu hỏi của một phiếu bài tập ngay trên sidebar |
 | 📝 Nhân bản câu hỏi | Sao chép câu hỏi sang phiếu khác |
 | 🔀 Di chuyển câu hỏi | Di chuyển câu hỏi giữa các phiếu |
+| 📊 Di chuyển câu hỏi dạng sheet | Bảng Jspreadsheet CE hỗ trợ chọn vùng, dán từ Excel/Google Sheets, hoàn tác/làm lại, thêm/xóa dòng; thống kê kết quả và tùy chọn hiện log API (request, HTTP status, phản hồi, thời gian; ẩn token) |
 | 🔍 Tìm câu hỏi | Tìm kiếm câu hỏi theo từ khoá hoặc ID |
 | ⬇️ Xuất ID câu hỏi | Xuất danh sách ID câu hỏi từ link ngân hàng |
 | 🏦 Tra cứu IID ngân hàng | Tra cứu thông tin IID của ngân hàng câu hỏi |

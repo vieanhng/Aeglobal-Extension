@@ -41,7 +41,9 @@ const SharedBankUtils = {
      * @param {string} token - Auth token
      * @returns {Promise<{success: boolean, id?: string, error?: string}>}
      */
-    async resolveBankShortcode(shortcode, uid, token) {
+    async resolveBankShortcode(shortcode, uid, token, onApiLog) {
+        const startedAt = Date.now();
+        const trace = { method: 'POST', endpoint: '/content/api/item-detail', request: { item_id: shortcode } };
         const API_BASE = "https://cloud-beta-api.lotuslms.com";
         const DOMAIN = "aeglobal";
 
@@ -53,7 +55,9 @@ const SharedBankUtils = {
                 new Promise((_, reject) => setTimeout(() => reject(new Error('Resolve timeout')), 10000))
             ]);
 
+            trace.status = response.status;
             const data = await response.json();
+            if (onApiLog) onApiLog({ ...trace, response: data, durationMs: Date.now() - startedAt });
 
             if (data.result && data.result.target_item_iid) {
                 return { success: true, id: data.result.target_item_iid };
@@ -63,6 +67,7 @@ const SharedBankUtils = {
                 return { success: false, error: "Không thể resolve shortcode" };
             }
         } catch (error) {
+            if (onApiLog) onApiLog({ ...trace, error: error.message, durationMs: Date.now() - startedAt });
             return { success: false, error: error.message };
         }
     },
@@ -74,7 +79,9 @@ const SharedBankUtils = {
      * @param {string} token - Auth token
      * @returns {Promise<{success: boolean, name?: string, error?: string}>}
      */
-    async getBankInfo(bankId, uid, token) {
+    async getBankInfo(bankId, uid, token, onApiLog) {
+        const startedAt = Date.now();
+        const trace = { method: 'POST', endpoint: '/question-bank/editor/fetch-node', request: { iid: bankId } };
         const API_BASE = "https://cloud-beta-api.lotuslms.com";
         const DOMAIN = "aeglobal";
 
@@ -86,7 +93,9 @@ const SharedBankUtils = {
                 new Promise((_, reject) => setTimeout(() => reject(new Error('Bank info timeout')), 10000))
             ]);
 
+            trace.status = response.status;
             const data = await response.json();
+            if (onApiLog) onApiLog({ ...trace, response: data, durationMs: Date.now() - startedAt });
 
             if (data.success && data.result && data.result.name) {
                 return { success: true, name: data.result.name };
@@ -94,6 +103,7 @@ const SharedBankUtils = {
                 return { success: false, error: "Không thể lấy thông tin ngân hàng" };
             }
         } catch (error) {
+            if (onApiLog) onApiLog({ ...trace, error: error.message, durationMs: Date.now() - startedAt });
             return { success: false, error: error.message };
         }
     },
@@ -105,7 +115,7 @@ const SharedBankUtils = {
      * @param {string} token - Auth token
      * @returns {Promise<{success: boolean, id?: string, name?: string, originalInput?: string, error?: string}>}
      */
-    async processBankLink(bankLink, uid, token) {
+    async processBankLink(bankLink, uid, token, onApiLog) {
         const extracted = this.extractBankId(bankLink);
         let bankId = null;
 
@@ -113,7 +123,7 @@ const SharedBankUtils = {
             bankId = extracted.id;
         } else {
             // Need to resolve shortcode
-            const resolved = await this.resolveBankShortcode(extracted.id, uid, token);
+            const resolved = await this.resolveBankShortcode(extracted.id, uid, token, onApiLog);
 
             if (!resolved.success) {
                 return { success: false, error: resolved.error, originalInput: bankLink };
@@ -123,7 +133,7 @@ const SharedBankUtils = {
         }
 
         // Get bank info (name)
-        const bankInfo = await this.getBankInfo(bankId, uid, token);
+        const bankInfo = await this.getBankInfo(bankId, uid, token, onApiLog);
 
         if (bankInfo.success) {
             return {

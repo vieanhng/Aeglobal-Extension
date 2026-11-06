@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Di chuyển câu hỏi dạng sheet — Aeglobal Tools</title>
+    <link href="../../lib/tailwind.min.css" rel="stylesheet">
+    <link href="../../lib/jspreadsheet-ce/jsuites.css" rel="stylesheet">
+    <link href="../../lib/jspreadsheet-ce/jspreadsheet.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+    <main class="workspace">
+        <header class="page-header">
+            <div><p class="eyebrow">QUẢN LÝ CÂU HỎI</p><h1>Di chuyển câu hỏi<span class="title-tag">Sheet</span></h1>
+                <p class="subtitle">Từ một bảng nhập, chuyển câu hỏi đến nhiều ngân hàng.</p></div>
+            <div class="auth-badge" id="authBadge"><span class="auth-dot" aria-hidden="true"></span><p id="authStatus">Đang tải xác thực…</p></div>
+        </header>
+        <section class="metrics" aria-label="Thống kê">
+            <div class="metric"><span class="metric-icon metric-indigo" aria-hidden="true">≡</span><div><p>Câu hỏi trong bảng</p><strong id="questionCount">0</strong></div><span class="metric-note">Sẵn sàng xử lý</span></div>
+            <div class="metric"><span class="metric-icon metric-green" aria-hidden="true">✓</span><div><p>Đã di chuyển</p><strong id="successCount">0</strong></div></div>
+            <div class="metric"><span class="metric-icon metric-red" aria-hidden="true">!</span><div><p>Thất bại</p><strong id="failedCount">0</strong></div></div>
+        </section>
+        <section class="sheet-card" aria-labelledby="sheetTitle">
+            <div class="card-toolbar">
+                <div><h2 id="sheetTitle">Bảng di chuyển</h2><p>Nhập Question ID và ngân hàng đích (IID hoặc link).</p></div>
+                <div class="toolbar">
+                    <button id="addRows" class="button button-secondary" type="button">+ Thêm 10 dòng</button>
+                    <button id="clearRows" class="button button-quiet" type="button">Xóa bảng</button>
+                    <button id="startMove" class="button button-primary" type="button" disabled>Di chuyển câu hỏi</button>
+                </div>
+            </div>
+            <div class="paste-hint"><span class="hint-icon" aria-hidden="true">↳</span><p><strong>Dán trực tiếp từ Excel hoặc Google Sheets.</strong> Sao chép 2 cột, bỏ dòng tiêu đề, rồi chọn ô đầu tiên và dán.</p><kbd>Ctrl V</kbd></div>
+            <div class="grid-frame"><div id="spreadsheet" class="sheet-wrap" aria-label="Bảng di chuyển câu hỏi"></div></div>
+            <div class="sheet-footer"><span><span class="save-dot" aria-hidden="true"></span> Dữ liệu tự động lưu</span><span>Kéo để chọn vùng <span class="separator">·</span> Chuột phải để thêm/xóa dòng <span class="separator">·</span> <kbd>Ctrl Z</kbd> hoàn tác</span></div>
+        </section>
+        <section class="run-status" aria-label="Trạng thái xử lý">
+            <div class="status-line"><span class="status-dot" aria-hidden="true"></span><p id="status" role="status">Sẵn sàng. Nhập hoặc dán dữ liệu để bắt đầu.</p><label class="log-toggle"><input id="showApiLogs" type="checkbox" aria-controls="apiLogPanel"><span>Hiện log API</span></label></div>
+            <p id="summary" class="run-summary" aria-live="polite"></p>
+            <progress id="progress" value="0" max="1" hidden></progress>
+        </section>
+        <section id="apiLogPanel" class="log-panel" aria-labelledby="logTitle" hidden>
+            <div class="log-toolbar"><div><h2 id="logTitle">Nhật ký API <span id="logCount" class="log-count">0</span></h2><p>Request, phản hồi và thời gian xử lý. Token được ẩn.</p></div><button id="clearApiLogs" class="button button-secondary" type="button">Xóa log</button></div>
+            <div id="apiLogs" class="log-list"><p class="log-empty">Chưa có log. Bật tùy chọn và chạy di chuyển để theo dõi.</p></div>
+        </section>
+        <p class="page-note">Các câu hỏi cùng ngân hàng đích được gom và xử lý cùng nhau.</p>
+    </main>
+    <script src="../shared-auth.js"></script>
+    <script src="../shared-bank-utils.js"></script>
+    <script src="../../lib/jspreadsheet-ce/jsuites.js"></script>
+    <script src="../../lib/jspreadsheet-ce/jspreadsheet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

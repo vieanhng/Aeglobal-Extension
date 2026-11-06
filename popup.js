@@ -343,6 +343,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const openQuestionMoveSheet = document.getElementById('openQuestionMoveSheet');
+    if (openQuestionMoveSheet) {
+        openQuestionMoveSheet.addEventListener('click', () => {
+            window.open(chrome.runtime.getURL('module/question-move-sheet/index.html'));
+        });
+    }
+
     const openQuestionDeleter = document.getElementById('openQuestionDeleter');
     if (openQuestionDeleter) {
         openQuestionDeleter.addEventListener('click', () => {

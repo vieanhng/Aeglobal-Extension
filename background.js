@@ -83,7 +83,10 @@ const deleteQuestion = async (questionId, uid, token) => {
 /**
  * Di chuyển câu hỏi vào ngân hàng - Gọi trực tiếp LotusLMS API
  */
-const moveQuestionsToBank = async (questionIdsToMove, bankId, uid, token) => {
+const moveQuestionsToBank = async (questionIdsToMove, bankId, uid, token, onApiLog) => {
+    const startedAt = Date.now();
+    const trace = { method: 'POST', endpoint: '/question-bank/editor/move-questions',
+        request: { new_bank_iid: bankId, current_bank_iid: '30303389', ids: questionIdsToMove } };
     console.log(`Đang di chuyển các câu hỏi ${questionIdsToMove.join(', ')} đến ngân hàng ${bankId}`);
     try {
         const formData = new FormData();
@@ -103,8 +106,9 @@ const moveQuestionsToBank = async (questionIdsToMove, bankId, uid, token) => {
             method: "POST",
             body: formData
         });
-
+        trace.status = response.status;
         const data = await response.json();
+        if (onApiLog) onApiLog({ ...trace, response: data, durationMs: Date.now() - startedAt });
 
         if (data.success) {
             console.log(`Di chuyển thành công đến ngân hàng ${bankId}.`);
@@ -115,6 +119,7 @@ const moveQuestionsToBank = async (questionIdsToMove, bankId, uid, token) => {
         }
     } catch (error) {
         console.error(`Lỗi khi di chuyển đến ngân hàng ${bankId}:`, error);
+        if (onApiLog) onApiLog({ ...trace, error: error.message, durationMs: Date.now() - startedAt });
         return false;
     }
 };
@@ -533,15 +538,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         const processBatch = async () => {
             const results = [];
+            const apiLogs = [];
 
             if (questionIds.length > 0) {
-                const moved = await moveQuestionsToBank(questionIds, bankIid, uid, token);
+                const moved = await moveQuestionsToBank(questionIds, bankIid, uid, token,
+                    request.includeApiLogs ? entry => apiLogs.push(entry) : undefined);
                 results.push({ bankIid, success: moved, moveCount: questionIds.length });
             } else {
                 results.push({ bankIid, success: false, moveCount: 0, message: "Không có câu hỏi nào được di chuyển cho ngân hàng này." });
             }
 
-            sendResponse({ status: "completed", results: results });
+            sendResponse({ status: "completed", results: results, ...(request.includeApiLogs ? { apiLogs } : {}) });
         };
 
         processBatch();
